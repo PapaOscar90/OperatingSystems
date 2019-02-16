@@ -1,17 +1,17 @@
 /*
  * File System Traversal
- * 
+ *
  * Troy Karan Harrison - s2841886
  * Philip Oetinger - s2966018
- * 
+ *
  * Traverses the file system starting from folder given in stdin. It compares the files for equality and prints all unique pairs that have the same content.
- * 
+ *
  */
 
 /*
  * Pseudocode
  * M
- * 
+ *
  */
 #include <unistd.h>
 #include <stdio.h>
@@ -36,7 +36,7 @@ int main(){
         }
     }
 
-    
+
     return 0;
 }
 
