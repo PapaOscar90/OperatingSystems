@@ -42,10 +42,14 @@ int main() {
   while (dirp) {
     struct dirent *dp;
     if ((dp = readdir(dirp)) != NULL) {
+      // If the file matches "." or ".." skip it
+      if (!strcmp(dp->d_name, ".") || !strcmp(dp->d_name, ".."))
+        continue;
       printf("%s\n", dp->d_name);
     } else {
+      // No files left to process
       closedir(dirp);
-      return 0;
+      break;
     }
   }
 
