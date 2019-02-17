@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #ifndef PATH_MAX
@@ -37,7 +38,9 @@ int main() {
   DIR *dirp = opendir(directoryPath);
   if (dirp == NULL) {
     fprintf(stderr, "Unable to open directory at path: %s\n", directoryPath);
+    exit(EXIT_FAILURE);
   }
+  chdir(directoryPath);
 
   while (dirp) {
     struct dirent *dp;
@@ -45,7 +48,19 @@ int main() {
       // If the file matches "." or ".." skip it
       if (!strcmp(dp->d_name, ".") || !strcmp(dp->d_name, ".."))
         continue;
-      printf("%s\n", dp->d_name);
+
+      struct stat sb;
+      if (stat(dp->d_name, &sb) == -1) {
+        perror("stat");
+        exit(EXIT_FAILURE);
+      }
+
+      if (S_ISDIR(sb.st_mode)) {
+        printf("Directory: %s\n", dp->d_name);
+      } else if (S_ISREG(sb.st_mode)) {
+        printf("File: %s\n", dp->d_name);
+      }
+
     } else {
       // No files left to process
       closedir(dirp);
@@ -65,5 +80,5 @@ int main() {
   /*   } */
   /* } */
 
-  return 0;
+  return EXIT_SUCCESS;
 }
