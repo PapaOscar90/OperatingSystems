@@ -34,8 +34,20 @@ int main() {
   char directoryPath[PATH_MAX];
   int pathLength = readLine(directoryPath, PATH_MAX, stdin);
 
-  printf("%d\n", pathLength);
-  printf("%s\n", directoryPath);
+  DIR *dirp = opendir(directoryPath);
+  if (dirp == NULL) {
+    fprintf(stderr, "Unable to open directory at path: %s\n", directoryPath);
+  }
+
+  while (dirp) {
+    struct dirent *dp;
+    if ((dp = readdir(dirp)) != NULL) {
+      printf("%s\n", dp->d_name);
+    } else {
+      closedir(dirp);
+      return 0;
+    }
+  }
 
   /* int numberOfFiles = 5; */
   /* int files[5] = {0, 0, 0, 0, 0}; */
