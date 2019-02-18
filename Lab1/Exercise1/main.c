@@ -66,7 +66,7 @@ int main(){
 
   parent = getpid();
 
-  //child = fork();
+  child = fork();
   if (child < 0){
     fprintf(stderr, "Fork failed: aborted\n");
     return EXIT_FAILURE;
@@ -82,6 +82,8 @@ int main(){
 
     printf("Child staring new core...\n");
     execve(execCmd, newargv, NULL);
+    perror(execve);
+    exit(EXIT_FAILURE);
   }
   printf("Parent waiting...\n");
   waitpid(-1, &status, 0);
