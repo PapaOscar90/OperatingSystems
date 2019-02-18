@@ -26,9 +26,7 @@
 #define FILENAME_MAX 256
 #endif
 
-
-
-int main(){
+int main() {
   char cmdLine[PATH_MAX];
   char execCmd[FILENAME_MAX];
   char argumentList[PATH_MAX];
@@ -36,24 +34,23 @@ int main(){
 
   readLine(cmdLine, PATH_MAX, stdin);
 
-
   printf("%s\nStarts with: %c\n", cmdLine, cmdLine[0]);
-  if(cmdLine[0] == '"'){
-    int secondQuote=1;
+  if (cmdLine[0] == '"') {
+    int secondQuote = 1;
 
-    while(cmdLine[secondQuote] != '"'){
+    while (cmdLine[secondQuote] != '"') {
       secondQuote++;
     }
-    strncpy(execCmd,cmdLine+1,secondQuote-1);
-    strncpy(argumentList,cmdLine+secondQuote+2, PATH_MAX);
+    strncpy(execCmd, cmdLine + 1, secondQuote - 1);
+    strncpy(argumentList, cmdLine + secondQuote + 2, PATH_MAX);
   } else {
     int endOfCommand = 1;
 
-    while(cmdLine[endOfCommand] != ' '){
+    while (cmdLine[endOfCommand] != ' ') {
       endOfCommand++;
     }
     strncpy(execCmd, cmdLine, endOfCommand);
-    strncpy(argumentList, cmdLine+endOfCommand+1, PATH_MAX);
+    strncpy(argumentList, cmdLine + endOfCommand + 1, PATH_MAX);
   }
 
   printf("Command: %s\n", execCmd);
@@ -61,18 +58,18 @@ int main(){
   char *fullPath = getenv("PATH");
   printf("PATH: %s\n", fullPath);
   strcat(fullPath, "/");
-  strcat(fullPath,execCmd);
+  strcat(fullPath, execCmd);
   printf("CommandPath: %s\n", fullPath);
 
   parent = getpid();
 
   child = fork();
-  if (child < 0){
+  if (child < 0) {
     fprintf(stderr, "Fork failed: aborted\n");
     return EXIT_FAILURE;
   }
 
-  if (child != 0){
+  if (child != 0) {
     /* Parent runs this */
   } else {
     char *newargv[3];
