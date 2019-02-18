@@ -17,6 +17,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 #ifndef PATH_MAX
@@ -27,65 +28,87 @@
 #define FILENAME_MAX 256
 #endif
 
-int main() {
-  char cmdLine[PATH_MAX];
-  char execCmd[FILENAME_MAX];
-  char argumentList[PATH_MAX];
-  int parent, child, status;
-
-  readLine(cmdLine, PATH_MAX, stdin);
-
-  printf("%s\nStarts with: %c\n", cmdLine, cmdLine[0]);
-  if (cmdLine[0] == '"') {
+void seperateCommandFromArguments(char* input, char* command, char* arguments){
+  // If the command starts with ", look for the closing and make that the command
+  if (input[0] == '"') {
     int secondQuote = 1;
 
-    while (cmdLine[secondQuote] != '"') {
+    while (input[secondQuote] != '"') {
       secondQuote++;
     }
-    strncpy(execCmd, cmdLine + 1, secondQuote - 1);
-    strncpy(argumentList, cmdLine + secondQuote + 2, PATH_MAX);
+
+    // Now copy the command and arguments to their respective strings
+    strncpy(command, input + 1, secondQuote - 1);
+    strncpy(arguments, input + secondQuote + 2, PATH_MAX);
   } else {
+    // If no quotes used, find the next ' ' signifying end of command
     int endOfCommand = 1;
 
-    while (cmdLine[endOfCommand] != ' ') {
+    while (input[endOfCommand] != ' ') {
       endOfCommand++;
     }
-    strncpy(execCmd, cmdLine, endOfCommand);
-    strncpy(argumentList, cmdLine + endOfCommand + 1, PATH_MAX);
+
+    // Now copy the command and arguments to their respective strings
+    strncpy(command, input, endOfCommand);
+    strncpy(arguments, input + endOfCommand + 1, PATH_MAX);
   }
+}
 
-  printf("Command: %s\n", execCmd);
-  printf("Arguments: %s\n", argumentList);
-  char *fullPath = getenv("PATH");
-  printf("PATH: %s\n", fullPath);
-  strcat(fullPath, "/");
-  strcat(fullPath, execCmd);
-  printf("CommandPath: %s\n", fullPath);
+// Go through all the paths from getenv to check if cmd exists
+void findFilePath(char* allPaths, char* command, char* fullFilePath){
+  struct stat buffer;
+  int exists = 1;
 
-  parent = getpid();
+  char *token = strtok(allPaths, ":");
+  // Go through all the paths, and if a command is found, break with fullFilePath containing path
+  while (token != NULL ){
+    sprintf(fullFilePath, "%s/%s", token, command);
+    exists = stat(fullFilePath, &buffer);
+    if (exists == 0 && S_ISREG(buffer.st_mode)){
+      break;
+    }
 
+    token = strtok(NULL,":");
+  }
+}
+
+
+int main() {
+  char line[PATH_MAX];
+  char execCmd[FILENAME_MAX];
+  char arguments[PATH_MAX];
+  int child, status;
+
+  readLine(line, PATH_MAX, stdin);
+
+  seperateCommandFromArguments(line, execCmd, arguments);
+
+  char *allPaths = getenv("PATH");
+  char fullFilePath[PATH_MAX];
+  findFilePath(allPaths, execCmd, fullFilePath);
+
+  // Create a child process that will execute the command
   child = fork();
   if (child < 0) {
     fprintf(stderr, "Fork failed: aborted\n");
     return EXIT_FAILURE;
   }
 
+
   if (child != 0) {
-    /* Parent runs this */
+    /* Parent runs nothing */
   } else {
+    /* Child runs the new core with arguments that were passed in */
     char *newargv[3];
     newargv[0] = execCmd;
-    newargv[1] = argumentList;
+    newargv[1] = arguments;
     newargv[2] = NULL;
 
-    printf("Child staring new core...\n");
-    execve(execCmd, newargv, NULL);
-    perror("execve");
+    execve(fullFilePath, newargv, NULL);
+    printf("Command %s not found!\n", execCmd);
     exit(EXIT_FAILURE);
   }
-  printf("Parent waiting...\n");
   waitpid(-1, &status, 0);
-  printf("Child is complete, ending...\n");
 
   return EXIT_SUCCESS;
 }
