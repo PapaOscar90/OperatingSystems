@@ -44,6 +44,14 @@ int main(){
     }
     strncpy(execCmd,cmdLine+1,secondQuote-1);
     strncpy(argumentList,cmdLine+secondQuote+2, PATH_MAX);
+  } else {
+    int endOfCommand = 1;
+
+    while(cmdLine[endOfCommand] != ' '){
+      endOfCommand++;
+    }
+    strncpy(execCmd, cmdLine, endOfCommand);
+    strncpy(argumentList, cmdLine+endOfCommand+1, PATH_MAX);
   }
 
   printf("Command: %s\n", execCmd);
