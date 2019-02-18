@@ -1,12 +1,11 @@
 /*
- * File System Traversal
+ * Parsing Command Line Arguments
  *
  * Troy Karan Harrison - s2841886
  * Philip Oetinger     - s2966018
  *
- * Traverses the file system starting from a directory specified over stdin. It
- * compares the files contained within the directory for equality and prints all
- * unique pairs that have the same content.
+ * This program takes in a command (optional quotes) with arguments
+ * and runs a new process that executes the command with arguments
  *
  */
 
@@ -28,6 +27,7 @@
 #define FILENAME_MAX 256
 #endif
 
+// This function will find and seperate the command from the rest of the arguments
 void seperateCommandFromArguments(char* input, char* command, char* arguments){
   // If the command starts with ", look for the closing and make that the command
   if (input[0] == '"') {
