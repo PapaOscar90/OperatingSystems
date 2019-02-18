@@ -31,17 +31,21 @@
 int main(){
   char cmdLine[PATH_MAX];
   char execCmd[FILENAME_MAX];
+  char argumentList[PATH_MAX];
   readLine(cmdLine, PATH_MAX, stdin);
 
 
   printf("%s\nStarts with: %c\n", cmdLine, cmdLine[0]);
   if(cmdLine[0] == '"'){
     int secondQuote=1;
+
     while(cmdLine[secondQuote] != '"'){
       secondQuote++;
     }
     strncpy(execCmd,cmdLine+1,secondQuote-1);
+    strncpy(argumentList,cmdLine+secondQuote+2, PATH_MAX);
   }
 
   printf("Command: %s\n", execCmd);
+  printf("Arguments: %s\n", argumentList);
 }
