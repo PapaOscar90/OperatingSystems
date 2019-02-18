@@ -75,5 +75,17 @@ int main(){
   if (child != 0){
     /* Parent runs this */
   } else {
+    char *newargv[3];
+    newargv[0] = execCmd;
+    newargv[1] = argumentList;
+    newargv[3] = NULL;
+
+    printf("Child staring new core...\n");
+    execve(execCmd, newargv, NULL);
   }
+  printf("Parent waiting...\n");
+  waitpid(-1, &status, 0);
+  printf("Child is complete, ending...\n");
+
+  return EXIT_SUCCESS;
 }
