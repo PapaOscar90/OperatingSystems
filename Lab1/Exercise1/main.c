@@ -32,6 +32,8 @@ int main(){
   char cmdLine[PATH_MAX];
   char execCmd[FILENAME_MAX];
   char argumentList[PATH_MAX];
+  int parent, child, status;
+
   readLine(cmdLine, PATH_MAX, stdin);
 
 
@@ -56,4 +58,22 @@ int main(){
 
   printf("Command: %s\n", execCmd);
   printf("Arguments: %s\n", argumentList);
+  char *fullPath = getenv("PATH");
+  printf("PATH: %s\n", fullPath);
+  strcat(fullPath, "/");
+  strcat(fullPath,execCmd);
+  printf("CommandPath: %s\n", fullPath);
+
+  parent = getpid();
+
+  //child = fork();
+  if (child < 0){
+    fprintf(stderr, "Fork failed: aborted\n");
+    return EXIT_FAILURE;
+  }
+
+  if (child != 0){
+    /* Parent runs this */
+  } else {
+  }
 }
