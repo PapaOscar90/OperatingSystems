@@ -79,7 +79,7 @@ int main() {
 
     printf("Child staring new core...\n");
     execve(execCmd, newargv, NULL);
-    perror(execve);
+    perror("execve");
     exit(EXIT_FAILURE);
   }
   printf("Parent waiting...\n");
