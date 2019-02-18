@@ -75,7 +75,7 @@ int main() {
     char *newargv[3];
     newargv[0] = execCmd;
     newargv[1] = argumentList;
-    newargv[3] = NULL;
+    newargv[2] = NULL;
 
     printf("Child staring new core...\n");
     execve(execCmd, newargv, NULL);
