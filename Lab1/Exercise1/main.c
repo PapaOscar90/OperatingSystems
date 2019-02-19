@@ -25,7 +25,7 @@
 
 // NOTE 127 is the exit code returned by bash when a command is not
 // found on the user's path and the command is not a built-in
-// shell command
+// shell command.
 #ifndef EXIT_COMMAND_NOT_FOUND
 #define EXIT_COMMAND_NOT_FOUND 127
 #endif
