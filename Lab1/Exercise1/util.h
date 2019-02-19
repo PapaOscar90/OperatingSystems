@@ -27,14 +27,21 @@ char *readLine(int n, FILE *stream) {
     exit(EXIT_FAILURE);
   }
 
-  // Replace the trailing newline (if it exists) with a null character
-  int strLen = strlen(str);
-  strLen--;
-  if (str[strLen] == '\n')
-    str[strLen] = '\0';
+  size_t strLen = strlen(str);
+
+  char *line;
+
+  // If there is a trailing newline
+  if (str[strLen - 1] == '\n') {
+    // Replace it
+    str[strLen - 1] = '\0';
+  }
+
+  // Determine new string length
+  strLen = strlen(str);
 
   // Truncate the memory of the temporary string and store the result in line.
-  char *line = safeCalloc(strLen + 1, sizeof(*line));
+  line = safeCalloc(strLen + 1, sizeof(*line));
   strncpy(line, str, strLen);
 
   // Cleanup
