@@ -16,7 +16,7 @@ void *safeCalloc(size_t __nmemb, size_t __size) {
   return p;
 }
 
-int isNonBreakingSpace(char c) { return c == ' ' || c == '\t'; }
+extern inline int isNonBreakingSpace(char c) { return c == ' ' || c == '\t'; }
 
 // Read at most n characters from a line from a provided file stream.
 char *readLine(int n, FILE *stream) {
