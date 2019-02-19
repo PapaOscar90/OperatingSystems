@@ -206,5 +206,5 @@ int main() {
   free(commandPath);
 
   // Forward the exit status of the child
-  return WEXITSTATUS(status);
+  return EXIT_SUCCESS;
 }
