@@ -25,6 +25,60 @@
 
 
 int main(){
+  int origParentID, status;
 
+  // Store the original processID for the final child to communicate with
+  origParentID = getpid();
+  int fdOrignal[2];
+
+  int numberOfChildrenToMake = 5;
+  int myRelativeID = 0;
+
+  int iSpawnedAChild = 0;
+
+  while(numberOfChildrenToMake > 0 && iSpawnedAChild == 0){
+    int fdForChild[2];
+    printf("Forking a new child...\n");
+    int parentPID = getpid();
+    int child = fork();
+
+    if(child !=0){
+      // Parent runs this
+      iSpawnedAChild = 1;
+    } else {
+      // Child runs this
+      numberOfChildrenToMake--;
+      myRelativeID++;
+      printf("I'm a new child. My parent is PID #%d\n", parentPID);
+      printf("numberOfChildrenToMake= %d, myRelativeID= %d", numberOfChildrenToMake, myRelativeID);
+    }
+
+  }
+
+  if(getpid() == origParentID){
+    /* close(fdOrignal[1]); */
+    /* char msg[64]; */
+
+    /* read(fd[0], msg, 64); */
+
+    /* printf("I got: %s\n", msg); */
+
+    /* close(fdOrignal[0]); */
+    printf("I'm the originalParent. Waiting...\n");
+    waitpid(getpid+5, &status, 0);
+  }else{
+    printf("This is the end. I'm pushing to my neighbor here.\nI am relativeID: %d\n", myRelativeID);
+    if(myRelativeID = 5){
+      /* close(fdOrignal[0]); */
+      /* char msg[64]; */
+
+      /* sprintf("helloParent", msg); */
+      /* write(fdOrignal[1], msg, 64); */
+
+      /* close(fdOrignal[1]); */
+
+      printf("I was relativeID: %d, I sent a message to origanlParent.\n", myRelativeID);
+    }
+  }
   return EXIT_SUCCESS;
 }

@@ -9,7 +9,7 @@ int main(int argc, char *argv[]){
     int parent, child, status;
 
     parent = getpid();
-    
+
     // Create a seperate PROCESS from this point, with the variables existing as is
     // until this point
     child = fork();
@@ -29,7 +29,7 @@ int main(int argc, char *argv[]){
         exit(99);
     }
 
-    /* 
+    /*
      * ALL run this
      */
     waitpid(-1, &status, 0);
