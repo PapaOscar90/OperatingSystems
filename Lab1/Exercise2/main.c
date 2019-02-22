@@ -49,12 +49,18 @@ int main(){
       // Child runs this
       numberOfChildrenToMake--;
       myRelativeID++;
-      printf("I'm a new child. My parent is PID #%d\n", parentPID);
-      printf("numberOfChildrenToMake= %d, myRelativeID= %d", numberOfChildrenToMake, myRelativeID);
+      printf("I'm a new child id: %d. My parent is PID #%d\n", getpid(), parentPID);
+      printf("numberOfChildrenToMake= %d, myRelativeID= %d\n", numberOfChildrenToMake, myRelativeID);
     }
 
   }
 
+  // The parent needs to start counting, and then wait until it hears from the last child. There will be a message on the fdOrignal
+  for(int i=0; i<5; i++){
+    waitpid(-1, &status, 0);
+  }
+
+  printf("My ID is: %d. The master is: %d", getpid(), origParentID);
   if(getpid() == origParentID){
     /* close(fdOrignal[1]); */
     /* char msg[64]; */
