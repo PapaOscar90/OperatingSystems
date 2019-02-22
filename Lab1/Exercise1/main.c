@@ -36,83 +36,78 @@
 //   OR
 //   The text enclosed between the first pair of single or double quotes.
 char *parseCommand(const char *input) {
-  size_t i = 0;
+  size_t offset = 0;
   size_t inputLen = strlen(input);
-  size_t startOfCommand;
-  size_t endOfCommand;
+
+  char *tempCommand = safeCalloc(inputLen + 1, sizeof(*tempCommand));
+
   // Skip whitespace
-  while (i < inputLen && isNonBreakingSpace(input[i]))
-    i++;
+  while (offset < inputLen && isNonBreakingSpace(input[offset]))
+    offset++;
 
-  // If the command starts with a double quote, search for the closing quote
-  if (input[i] == '"' || input[i] == '\'') {
-    size_t firstQuoteIdx = i;
-    size_t secondQuoteIdx = i + 1;
-    // Find the position of the second quote
-    while (secondQuoteIdx < inputLen &&
-           input[secondQuoteIdx] != input[firstQuoteIdx]) {
-      secondQuoteIdx++;
+  int withinDoubleQuotes = 0;
+  int withinSingleQuotes = 0;
+  size_t i = 0;
+  while (offset < inputLen && (withinDoubleQuotes || withinSingleQuotes ||
+                               !isNonBreakingSpace(input[offset]))) {
+    if (!withinSingleQuotes && input[offset] == '"') {
+      withinDoubleQuotes = !withinDoubleQuotes;
+    } else if (!withinDoubleQuotes && input[offset] == '\'') {
+      withinSingleQuotes = !withinSingleQuotes;
+    } else {
+      tempCommand[i] = input[offset];
+      i++;
     }
-
-    // If no matching quote was found
-    if (secondQuoteIdx >= inputLen) {
-      fprintf(stderr, "Mismatched quotation: %c\n", input[firstQuoteIdx]);
-      exit(EXIT_FAILURE);
-    }
-
-    // Enclosed is the command sans the quotes
-    startOfCommand = firstQuoteIdx + 1;
-    endOfCommand = secondQuoteIdx;
-  } else {
-    // As there are no quotes the end of the command is denoted by the first
-    // whitespace character
-    startOfCommand = i;
-    endOfCommand = i + 1;
-
-    // Increment till a whitespace character is found
-    while (endOfCommand < inputLen &&
-           !isNonBreakingSpace(input[endOfCommand])) {
-      endOfCommand++;
-    }
+    offset++;
   }
 
-  // Copy the command from the line and return it
-  char *command =
-      safeCalloc(endOfCommand - startOfCommand + 1, sizeof(*command));
-  strncpy(command, input + startOfCommand, endOfCommand - startOfCommand);
+  if (withinDoubleQuotes || withinSingleQuotes) {
+    free(tempCommand);
+    fprintf(stderr, "Mismatched quotation: %c\n",
+            withinDoubleQuotes ? '"' : '\'');
+    exit(EXIT_FAILURE);
+  }
+
+  tempCommand[offset] = '\0';
+
+  // Copy the command from the temporary buffer and return it
+  char *command = safeCalloc(strlen(tempCommand) + 1, sizeof(*command));
+  strcpy(command, tempCommand);
+  free(tempCommand);
   return command;
 }
 
 // Extract the arguments from an input string.
 char *parseArguments(const char *input) {
-  size_t i = 0;
+  size_t offset = 0;
   size_t inputLen = strlen(input);
 
   // Skip whitespace
-  while (i < inputLen && isNonBreakingSpace(input[i]))
-    i++;
+  while (offset < inputLen && isNonBreakingSpace(input[offset]))
+    offset++;
 
   // Skip past the argument
-  if (input[i] == '"' || input[i] == '\'') {
-    // Skip past the quotes if they exist
-    size_t firstQuoteIdx = i;
-    i++;
-    while (i < inputLen && input[i] != input[firstQuoteIdx])
-      i++;
-  } else {
-    // Skip past the text of the argument
-    while (i < inputLen && !isNonBreakingSpace(input[i]))
-      i++;
+  int withinDoubleQuotes = 0;
+  int withinSingleQuotes = 0;
+  while (offset < inputLen && (withinDoubleQuotes || withinSingleQuotes ||
+                               !isNonBreakingSpace(input[offset]))) {
+    if (!withinSingleQuotes && input[offset] == '"') {
+      withinDoubleQuotes = !withinDoubleQuotes;
+    } else if (!withinDoubleQuotes && input[offset] == '\'') {
+      withinSingleQuotes = !withinSingleQuotes;
+    }
+    offset++;
   }
 
   // Skip whitespace before the arguments
-  while (i < inputLen && isNonBreakingSpace(input[i]))
-    i++;
+  while (offset < inputLen && isNonBreakingSpace(input[offset]))
+    offset++;
 
-  if (i < inputLen) {
+  if (offset < inputLen) {
     // If there are arguments, copy them
-    char *arguments = safeCalloc(strlen(input) - i + 1, sizeof(*arguments));
-    strncpy(arguments, input + i, strlen(input) - i);
+    char *arguments =
+        safeCalloc(strlen(input) - offset + 1, sizeof(*arguments));
+    strncpy(arguments, input + offset, strlen(input) - offset);
     return arguments;
   } else {
     // There are no arguments
