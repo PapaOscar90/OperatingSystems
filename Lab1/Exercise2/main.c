@@ -26,7 +26,8 @@
 
 int main(){
   int origParentID, status;
-  int child;
+  int parentID, childID;
+  char msg[64];
 
   // Store the original processID for the final child to communicate with
   origParentID = getpid();
@@ -40,10 +41,14 @@ int main(){
   while(1 && numberOfChildrenToMake > 0){
     int fd_child[2];
 
-    child = fork();
-    if(child != 0){
+    childID = fork();
+    if(childID != 0){
       // Parent runs this
-      printf("%d created ID: %d\n", myRelativeID, child);
+      printf("%d created ID: %d\n", myRelativeID, childID);
+      close(fd_child[0]);
+      sprintf(msg, "Hello child");
+      write(fd_child[1],msg, 64);
+      close(fd_child[1]);
       break;
     }else{
       myRelativeID++;
@@ -56,8 +61,13 @@ int main(){
     printf("I'm the last child. I'm ending.\n");
     return EXIT_SUCCESS;
   }else{
-    waitpid(child, &status,0);
-    printf("My child, %d, ended, so I will end.\n", child);
+    close(fd_child[1]);
+    read(fd_child[0], msg, 64);
+
+    printf("My parent said: %s\n", msg);
+    close(fd_child[0]);
+    waitpid(childID, &status,0);
+    printf("My child, %d, ended, so I will end.\n", childID);
   }
   return EXIT_SUCCESS;
 }
