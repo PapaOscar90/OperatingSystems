@@ -62,26 +62,27 @@ int main(){
 
   printf("My ID is: %d. The master is: %d\n", getpid(), origParentID);
   if(getpid() == origParentID){
-    /* close(fdOrignal[1]); */
-    /* char msg[64]; */
+    close(fdOrignal[1]);
+    char msg[64];
 
-    /* read(fd[0], msg, 64); */
+    read(fdOrignal[0], msg, 64);
 
-    /* printf("I got: %s\n", msg); */
+    printf("I got: %s\n", msg);
 
-    /* close(fdOrignal[0]); */
+    close(fdOrignal[0]);
     printf("I'm the originalParent. Waiting...\n");
     waitpid(getpid+5, &status, 0);
   }else{
     printf("This is the end. I'm pushing to my neighbor here.I am relativeID: %d\n", myRelativeID);
     if(myRelativeID == 5){
-      /* close(fdOrignal[0]); */
-      /* char msg[64]; */
+      printf("I'm the last child. I will talk to super parent.\n");
+      close(fdOrignal[0]);
+      char msg[64];
 
-      /* sprintf("helloParent", msg); */
-      /* write(fdOrignal[1], msg, 64); */
+      sprintf(msg, "Hello super parent!");
+      write(fdOrignal[1], msg, 64);
 
-      /* close(fdOrignal[1]); */
+      close(fdOrignal[1]);
 
       printf("I was relativeID: %d, I sent a message to origanlParent.\n", myRelativeID);
     }
