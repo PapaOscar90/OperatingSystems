@@ -26,6 +26,7 @@
 
 int main(){
   int origParentID, status;
+  int child;
 
   // Store the original processID for the final child to communicate with
   origParentID = getpid();
@@ -34,58 +35,29 @@ int main(){
   int numberOfChildrenToMake = 5;
   int myRelativeID = 0;
 
-  int iSpawnedAChild = 0;
+  printf("Hello, I am the super_parent. My ID is %d, and RID is %d\n", getpid(), myRelativeID);
 
-  while(numberOfChildrenToMake > 0 && iSpawnedAChild == 0){
-    int fdForChild[2];
-    printf("Forking a new child...\n");
-    int parentPID = getpid();
-    int child = fork();
+  while(1 && numberOfChildrenToMake > 0){
+    int fd_child[2];
 
-    if(child !=0){
+    child = fork();
+    if(child != 0){
       // Parent runs this
-      iSpawnedAChild = 1;
-    } else {
-      // Child runs this
-      numberOfChildrenToMake--;
+      printf("%d created ID: %d\n", myRelativeID, child);
+      break;
+    }else{
       myRelativeID++;
-      printf("I'm a new child id: %d. My parent is PID #%d\n", getpid(), parentPID);
-      printf("numberOfChildrenToMake= %d, myRelativeID= %d\n", numberOfChildrenToMake, myRelativeID);
+      numberOfChildrenToMake--;
+      printf("Hello World, I am RID, %d (%d).\n", getpid(), myRelativeID);
     }
-
   }
 
-  // The parent needs to start counting, and then wait until it hears from the last child. There will be a message on the fdOrignal
-  for(int i=0; i<5; i++){
-    waitpid(-1, &status, 0);
-  }
-
-  printf("My ID is: %d. The master is: %d\n", getpid(), origParentID);
-  if(getpid() == origParentID){
-    close(fdOrignal[1]);
-    char msg[64];
-
-    read(fdOrignal[0], msg, 64);
-
-    printf("I got: %s\n", msg);
-
-    close(fdOrignal[0]);
-    printf("I'm the originalParent. Waiting...\n");
-    waitpid(getpid+5, &status, 0);
+  if(myRelativeID == 5){
+    printf("I'm the last child. I'm ending.\n");
+    return EXIT_SUCCESS;
   }else{
-    printf("This is the end. I'm pushing to my neighbor here.I am relativeID: %d\n", myRelativeID);
-    if(myRelativeID == 5){
-      printf("I'm the last child. I will talk to super parent.\n");
-      close(fdOrignal[0]);
-      char msg[64];
-
-      sprintf(msg, "Hello super parent!");
-      write(fdOrignal[1], msg, 64);
-
-      close(fdOrignal[1]);
-
-      printf("I was relativeID: %d, I sent a message to origanlParent.\n", myRelativeID);
-    }
+    waitpid(child, &status,0);
+    printf("My child, %d, ended, so I will end.\n", child);
   }
   return EXIT_SUCCESS;
 }
