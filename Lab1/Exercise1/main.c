@@ -19,6 +19,10 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#ifndef LINE_MAX
+#define LINE_MAX 10000000
+#endif
+
 // NOTE 127 is the exit code returned by bash when a command is not
 // found on the user's path and the command is not a built-in
 // shell command.
@@ -146,7 +150,7 @@ char *findCommandPath(char *command) {
 
 int main() {
   // Read the commands and arguments into a string from stdin
-  char *line = readLine(stdin);
+  char *line = readLine(LINE_MAX, stdin);
 
   // Parse the command from the user input
   char *command = parseCommand(line);
