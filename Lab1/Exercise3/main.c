@@ -88,7 +88,7 @@ size_t getFilesInDirectoryRec(DIR *dirp, char *newPath, char **files) {
   // Store the original path to return
   // TODO there may be some more standard mechanism when using `chdir` then
   // simply storing the original working directory to return to.
-  char originalPath[PATH_MAX];
+  char originalPath[PATH_MAX + 1];
   getcwd(originalPath, PATH_MAX);
 
   size_t numberOfFiles = 0;
@@ -160,7 +160,7 @@ size_t getFilesInDirectory(char *directoryPath, char **files) {
 
   size_t numberOfFiles = getFilesInDirectoryRec(dirp, directoryPath, files);
 
-  char currentPath[PATH_MAX];
+  char currentPath[PATH_MAX + 1];
   getcwd(currentPath, PATH_MAX);
 
   for (size_t i = 0; i < numberOfFiles; i++) {
