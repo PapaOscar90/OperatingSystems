@@ -16,38 +16,38 @@ void *safeCalloc(size_t __nmemb, size_t __size) {
   return p;
 }
 
-extern inline int isNonBreakingSpace(char c) { return c == ' ' || c == '\t'; }
-
-// Read at most n characters from a line from a provided file stream.
-char *readLine(int n, FILE *stream) {
-  char *str = safeCalloc(n, sizeof(*str));
-  char *ptr = fgets(str, n, stream);
-  if (ptr == NULL) {
-    fprintf(stderr, "Error when reading line.\n");
+// realloc which panics on OOM.
+void *safeRealloc(void *__ptr, size_t __size) {
+  void *p = realloc(__ptr, __size);
+  if (p == NULL) {
+    fprintf(stderr, "Realloc failed. Out of memory?\n");
     exit(EXIT_FAILURE);
   }
 
-  size_t strLen = strlen(str);
+  return p;
+}
 
-  char *line;
+extern inline int isNonBreakingSpace(char c) { return c == ' ' || c == '\t'; }
 
-  // If there is a trailing newline
-  if (str[strLen - 1] == '\n') {
-    // Replace it
-    str[strLen - 1] = '\0';
+// Read line from a file stream
+char *readLine(FILE *stream) {
+  size_t size = 0;
+  size_t len = 0;
+  size_t last = 0;
+  char *buffer = NULL;
+
+  do {
+    size += BUFSIZ;
+    buffer = safeRealloc(buffer, size);
+    fgets(buffer + last, size, stream);
+    len = strlen(buffer);
+    last = len - 1;
+  } while (!feof(stream) && buffer[last] != '\n');
+
+  if (buffer[last] == '\n') {
+    buffer[last] = '\0';
   }
-
-  // Determine new string length
-  strLen = strlen(str);
-
-  // Truncate the memory of the temporary string and store the result in line.
-  line = safeCalloc(strLen + 1, sizeof(*line));
-  strncpy(line, str, strLen);
-
-  // Cleanup
-  free(str);
-
-  return line;
+  return buffer;
 }
 
 #endif /* UTIL_H */
