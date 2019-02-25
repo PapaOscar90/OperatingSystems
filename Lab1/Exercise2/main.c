@@ -21,10 +21,24 @@
 #define END_NUMBER 50
 #define MSG_LEN 256
 
+void checkedRead(int fd, void *buf, size_t nbytes) {
+  if (read(fd, buf, nbytes) == -1) {
+    perror("read");
+    exit(EXIT_FAILURE);
+  }
+}
+
+void checkedWrite(int fd, const void *buf, size_t n) {
+  if (write(fd, buf, n) == -1) {
+    perror("write");
+    exit(EXIT_FAILURE);
+  }
+}
+
 // pipe which exits on error
 void checkedPipe(int fd[2]) {
   if (pipe(fd) == -1) {
-    fprintf(stderr, "Could not make pipe\n");
+    perror("pipe");
     exit(EXIT_FAILURE);
   }
 }
@@ -33,7 +47,7 @@ void checkedPipe(int fd[2]) {
 pid_t checkedFork(void) {
   pid_t id = fork();
   if (id == -1) {
-    fprintf(stderr, "Could not fork process\n");
+    perror("fork");
     exit(EXIT_FAILURE);
   }
 
@@ -97,7 +111,7 @@ void processLoop(size_t numberOfProcesses) {
     sprintf(msg, "%d", count);
 
     // Send the message to the next in the chain.
-    write(pipeEven[1], msg, MSG_LEN);
+    checkedWrite(pipeEven[1], msg, MSG_LEN);
   }
 
   while (1) {
@@ -125,13 +139,13 @@ void processLoop(size_t numberOfProcesses) {
     }
 
     // Read and convert the message
-    read(readPipe, msg, MSG_LEN);
+    checkedRead(readPipe, msg, MSG_LEN);
     count = atoi(msg);
 
     if (count == -1 || count > END_NUMBER) {
       // Termination should be communicated through the ring
       sprintf(msg, "%d", -1);
-      write(writePipe, msg, MSG_LEN);
+      checkedWrite(writePipe, msg, MSG_LEN);
       break;
     }
 
@@ -142,7 +156,7 @@ void processLoop(size_t numberOfProcesses) {
     sprintf(msg, "%d", count);
 
     // Transmit the message to the next in the chain
-    write(writePipe, msg, MSG_LEN);
+    checkedWrite(writePipe, msg, MSG_LEN);
   }
 
   // Wait for the processes to be finished to prevent zombification
