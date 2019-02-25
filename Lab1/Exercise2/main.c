@@ -23,93 +23,119 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-int main() {
-  int origParentID, status;
-  int child;
-  int endNumber = 50;
-  int number = 0;
+#define END_NUMBER 50
+#define MSG_LEN 256
 
-  char msg[256];
-
-  // Store the original processID for the final child to communicate with
-  origParentID = getpid();
-  int pipeWrap[2];
-  if (pipe(pipeWrap) < 0) {
-    fprintf(stderr, "Couldn not make pipe.");
+void checkedPipe(int fd[2]) {
+  if (pipe(fd) == -1) {
+    fprintf(stderr, "Could not make pipe\n");
+    exit(EXIT_FAILURE);
   }
+}
+
+pid_t checkedFork(void) {
+  pid_t id = fork();
+  if (id == -1) {
+    fprintf(stderr, "Could not fork process\n");
+    exit(EXIT_FAILURE);
+  }
+
+  return id;
+}
+
+int spawnChildren(int numberOfChildren, int relativeId, int pipeEven[2],
+                  int pipeOdd[2]) {
+  for (int i = 0; i < numberOfChildren; i++) {
+    checkedPipe(relativeId % 2 == 0 ? pipeEven : pipeOdd);
+    if (checkedFork() != 0) {
+      // Parent
+      return relativeId;
+    } else {
+      relativeId++;
+    }
+  }
+
+  return relativeId;
+}
+
+int main() {
+  // Disable buffering of stdout
+  setbuf(stdout, NULL);
+
+  // Incremented by the threads until END_NUMBER
+  int count = 0;
+  int numberOfProcesses;
+  scanf("%d", &numberOfProcesses);
+  int relativeId = 0;
+
+  if (numberOfProcesses == 1) {
+    for (int i = 0; i < END_NUMBER + 1; i++) {
+      printf("relative pid=%d: %d\n", relativeId, count);
+      count++;
+    }
+    return EXIT_SUCCESS;
+  }
+
+  char msg[MSG_LEN] = "";
+  int pipeWrap[2];
   int pipeEven[2];
   int pipeOdd[2];
 
-  int numberOfChildrenToMake = 5;
-  int numberOfChildren = 5;
-  int myRelativeID = 0;
+  checkedPipe(pipeWrap);
+  relativeId =
+      spawnChildren(numberOfProcesses - 1, relativeId, pipeEven, pipeOdd);
 
-  printf("Hello, I am the super_parent. My ID is %d, and RID is %d\n", getpid(),
-         myRelativeID);
+  // Jump start process
+  if (relativeId == 0) {
+    printf("relative pid=%d: %d\n", relativeId, count);
+    count++;
+    sprintf(msg, "%d", count);
+    write(pipeEven[1], msg, MSG_LEN);
+  }
 
-  while (numberOfChildrenToMake > 0) {
-    if ((myRelativeID % 2 == 0 && pipe(pipeEven) < 0) ||
-        (myRelativeID % 2 == 1 && pipe(pipeOdd) < 0)) {
-      fprintf(stderr, "Could not make pipe\n");
-      return EXIT_FAILURE;
-    }
-    child = fork();
-    if (child != 0) {
-      // Parent runs this
-      printf("ID= %d, number=%d, created=%d\n", myRelativeID, number, child);
-      if (myRelativeID == 0) {
-        printf("relative pid=%d: %d\n", myRelativeID, number);
-        number++;
-        sprintf(msg, "%d", number);
-        write(pipeEven[1], msg, 256);
-        close(pipeEven[0]);
+  while (1) {
+    if (relativeId == 0) {
+      read(pipeWrap[0], msg, MSG_LEN);
+      count = atoi(msg);
+      if (count == -1 || count > END_NUMBER) {
+        sprintf(msg, "%d", -1);
+        write(pipeEven[1], msg, MSG_LEN);
+        break;
       }
-      break;
+      printf("relative pid=%d: %d\n", relativeId, count);
+      count++;
+      sprintf(msg, "%d", count);
+      write(pipeEven[1], msg, MSG_LEN);
+    } else if (relativeId == numberOfProcesses - 1) {
+      read((relativeId % 2 == 0 ? pipeOdd[0] : pipeEven[0]), msg, MSG_LEN);
+      count = atoi(msg);
+      if (count == -1 || count > END_NUMBER) {
+        sprintf(msg, "%d", -1);
+        write(pipeWrap[1], msg, MSG_LEN);
+        break;
+      }
+      printf("relative pid=%d: %d\n", relativeId, count);
+      count++;
+      sprintf(msg, "%d", count);
+      write(pipeWrap[1], msg, MSG_LEN);
     } else {
-      myRelativeID++;
-      numberOfChildrenToMake--;
-      printf("Hello World, I am RID, %d (%d).\n", getpid(), myRelativeID);
+      read(relativeId % 2 == 0 ? pipeOdd[0] : pipeEven[0], msg, MSG_LEN);
+      count = atoi(msg);
+      if (count == -1 || count > END_NUMBER) {
+        sprintf(msg, "%d", -1);
+        write(relativeId % 2 == 0 ? pipeEven[1] : pipeOdd[1], msg, MSG_LEN);
+        break;
+      }
+      printf("relative pid=%d: %d\n", relativeId, count);
+      count++;
+      sprintf(msg, "%d", count);
+      write(relativeId % 2 == 0 ? pipeEven[1] : pipeOdd[1], msg, MSG_LEN);
     }
   }
 
-  while (number < endNumber) {
-    if (myRelativeID == 0) {
-      printf("Relative ID: %d, trying to read from pipeWrap.\n", myRelativeID);
-      read(pipeWrap[0], msg, 256);
-      number = atoi(msg);
-      printf("relative pid=%d: %d", myRelativeID, number);
-      number++;
-      sprintf(msg, "%d", number);
-      write(pipeEven[1], msg, 256);
-    } else if (myRelativeID == numberOfChildren) {
-      printf("Relative ID: %d, trying to read from pipe?.\n", myRelativeID);
-      read((myRelativeID % 2 == 0 ? pipeEven[0] : pipeOdd[0]), msg, 256);
-      number = atoi(msg);
-      printf("relative pid=%d: %d", myRelativeID, number);
-      number++;
-      sprintf(msg, "%d", number);
-      write(pipeWrap[1], msg, 256);
-    } else if (myRelativeID % 2 == 1) {
-      printf("Relative ID: %d, trying to read from pipeEven.\n", myRelativeID);
-      read(pipeEven[0], msg, 256);
-      number = atoi(msg);
-      printf("relative pid=%d: %d", myRelativeID, number);
-      number++;
-      sprintf(msg, "%d", number);
-      write(pipeOdd[1], msg, 256);
-    } else {
-      printf("Relative ID: %d, trying to read from pipeOdd.\n", myRelativeID);
-      read(pipeOdd[0], msg, 256);
-      number = atoi(msg);
-      printf("relative pid=%d: %d", myRelativeID, number);
-      number++;
-      sprintf(msg, "%d", number);
-      write(pipeEven[1], msg, 256);
-    }
+  for (int i = 0; i < numberOfProcesses - 1; i++) {
+    waitpid(-1, NULL, 0);
   }
 
-  for (int i = 0; i < 5; i++) {
-    waitpid(-1, &status, 0);
-  }
   return EXIT_SUCCESS;
 }
