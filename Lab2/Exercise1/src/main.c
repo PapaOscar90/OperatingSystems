@@ -1,7 +1,12 @@
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 
+// The shell follows the basic structure as provided in the Minix book:
 int main() {
-  printf("Hello, world!\n");
+
+  while (true) { // repeat forever
+  }
+
   return EXIT_SUCCESS;
 }
