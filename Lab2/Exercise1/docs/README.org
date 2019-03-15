@@ -1,0 +1,53 @@
+* TODO Requirements [0/7]
+** TODO Start a program in the user's search path (=$path=).
+** TODO I/O redirection
+   #+begin_src sh
+     a.out < in > out
+   #+end_src
+** TODO Background processes
+   #+begin_src sh
+     a.out &
+   #+end_src
+** TODO Pipes
+   #+begin_src sh
+     a.out | b.out | c.out
+   #+end_src
+** TODO String parsing
+   #+begin_src sh
+     a.out "some string <> with 'special' characters"
+   #+end_src
+** WAITING Exit the shell on =exit=
+** WAITING Error/syntax checking [0/4]
+*** WAITING Invalid syntax
+    Ending with =<= without providing a filename: =invalid syntax!\n=
+*** WAITING Input and output to the same file
+    =Error: input and output files cannot be equal!\n=
+*** WAITING Exiting before background processes finish
+    =There are still background processes running!\n=
+*** WAITING Command not found
+    =Error: command not found!\n=
+* Available tools and references
+** Shell implementation in Minix book
+** Provided shell grammar
+** Flex and Bison
+* Report
+** Introduction
+   This is the shell implementation for lab 2 - exercise 1 of the operating systems course. The shell uses the basic Read-Execute-Loop structure as presented in the Minix book. We were provided a shell grammar, that the test cases on Themis would conform to.
+
+** Design
+   The basic structure of out application is simple.
+   #+BEGIN_VERSE
+   while status != Exit {
+       line <- readLine();
+       status = eval(line);
+       if isError(status)  {
+         printError(status);
+       }
+   }
+   #+END_VERSE
+
+   We use flex and bison to aid in the tokenization processes. This allows for a more declarative specification of the grammar thereby simplifying both the initial development and future extension. Additionally, we wished to gain familiarity with them as they well-known and widely used.
+   
+** Issues
+** Evaluation and Extension
+   Passes all the test cases. Has not implemented additional features though that should be relatively quick.
