@@ -5,7 +5,8 @@ DOC_DIR := doc
 LEX_SOURCES := $(shell find $(SOURCE_DIR) -name "*.l")
 YACC_SOURCES := $(shell find $(SOURCE_DIR) -name "*.y")
 CC_SOURCES := $(shell find $(SOURCE_DIR) -name "*.c")
-TEST_SOURCES := $(shell find $(TEST_DIR) -name "*.c")
+TEST_SOURCES := $(shell find $(TEST_DIR) -name "test_*.c")
+TEST_AUX_SOURCES := $(shell find $(SOURCE_DIR) -not -name "main.c" -name "*.c")
 
 # Lexer
 LEX = flex
@@ -17,8 +18,8 @@ YFLAGS = -d
 
 # Compiler
 CC = gcc
-CFLAGS = -Wall -std=gnu99 -Werror
-C_TEST_FLAGS = -std=gnu99
+CFLAGS = -Wall -std=gnu11 -Werror
+C_TEST_FLAGS = -std=gnu11
 
 default: $(TARGET)
 
@@ -30,12 +31,12 @@ shell: $(SOURCES)
 	$(CC) $(CFLAGS) $(CC_SOURCES) -o $@
 
 .PHONY: test
-test: $(TEST_SOURCES)
+test: $(TEST_SOURCES) $(TEST_AUX_SOURCES)
 	for file in $(TEST_SOURCES); do \
-		$(CC) $(C_TEST_FLAGS) $$file -o test_`basename "$$file" .c`;\
+		$(CC) $(C_TEST_FLAGS) $$file $(TEST_AUX_SOURCES) -o `basename "$$file" .c`;\
 	done
 	for file in $(TEST_SOURCES); do \
-		./test_`basename "$$file" .c`;\
+		./`basename "$$file" .c`;\
 	done
 
 .PHONY: doc
@@ -43,11 +44,16 @@ doc:
 		doxygen $(DOC_DIR)/Doxyfile
 
 .PHONY: clean
-clean: src-clean doc-clean
+clean: src-clean doc-clean test-clean
+
+.PHONY: test-clean
+test-clean:
+		-rm -f test_*
+
 .PHONY: src-clean
 src-clean:
-		-rm $(TARGET) *.tab.h *.tab.c *.yy.c test_*
+		-rm -f $(TARGET) *.tab.h *.tab.c *.yy.c
 
 .PHONY: doc-clean
 doc-clean:
-		-rm -r doc/html doc/latex
+		-rm -rf doc/html doc/latex
