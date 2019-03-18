@@ -1,65 +1,64 @@
 #ifndef SHELL_H
 #define SHELL_H
 
-#include "stdio.h"
+#include "command.h"
+#include "redirection.h"
+#include "util.h"
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-// Possible states for the shell to be in
-// Negative values represent errors
-typedef enum ShellStatus {
-  // Initial state for the shell
-  ShellStartup = 0,
+/// Evaluate the provided string, thereby executing the encoded commands.
+void eval(char const *eval_string);
 
-  // Exit the shell
-  ShellExit = 1,
+/// Parse the provided string, thereby extracting the encoded commands. The
+/// extracted commands are stored along the returned pointer. The amount of
+/// commands is updated in the reference to `num_commands`.
+Command *parse(char const *parse_string, size_t *num_commands);
 
-  // Execution of the previous command was successful (typically no response
-  // should be necessary)
-  ShellSuccessfulExecution = 2,
+/// Execute a command. A `command` may be either a `BUILTIN` or an `EXTERNAL`
+/// command. The logic is necessarily different depending on what should occur.
+void exec(Command command);
 
-  // The previous command had invalid syntax
-  ShellInvalidSyntaxError = -1,
+/// Execute a builtin command.
+void exec_builtin(Command command);
 
-  // The previous command involved input and output to the same file
-  ShellInputOutputToSameFileError = -2,
+/// Execute an external command.
+void exec_external(Command command);
 
-  // The previous command was to exit while background processes were still
-  // running
-  ShellExitBackgroundProcessesRunningError = -3,
-
-  // The previous command was not a shell builtin nor on the path
-  ShellCommandNotFoundError = -4
-} ShellStatus;
-
-// Possible states for a parse to be in
-// Negative values represent errors
-typedef enum ParseStatus {
-  ParseOk = 0,
-  ParseInvalidSyntaxError = -1,
-} ParseStatus;
-
-// Possible states for an execution to be in
-// Negative values represent errors
-typedef enum ExecStatus {
-  ExecExit = 0,
-  ExecSuccessfulExecution = 1,
-  ExecInputOutputToSameFileError = -1,
-  ExecExitBackgroundProcessesRunning = -2,
-  ExecCommandNotFoundError = -3,
-} ExecStatus;
-
-// Pretty print a shell status
-void print_shell_status(ShellStatus status);
-
-// Convert a parse status to a shell status
-ShellStatus shell_status_from_parse_status(ParseStatus status);
-
-// Convert an exec status to a shell status
-ShellStatus shell_status_from_exec_status(ExecStatus status);
-
-// Display the shell prompt.
+/// Display a prompt to the user.
 void type_prompt(void);
 
-// Evaluate a string
-ShellStatus eval(char const *eval_string);
+/* SHELL PARSING *************************************************************/
+typedef enum {
+  COMMAND_NAME,
+  OPTIONS,
+  COMMAND_PART,
+  COMMAND_LIST,
+  REDIRECT_IN,
+  REDIRECT_OUT,
+  IO_REDIRECTION,
+  EMPTY,
+  FILE_NAME,
+  COMMAND,
+  BACKGROUND,
+  INPUT_LINE,
+  OTHER,
+} ElementType;
+
+typedef struct {
+  ElementType type;
+  union { // Allows for other elements to be specified in the future
+    Command command;
+  };
+} Element;
+
+// Create a command as one of the possible parsed elements.
+Element *make_command(char const *command, char const *arguments,
+                      Redirection redirection, bool in_background);
+
+// Deal with the EOF in the parsing.
+void eof_handle(void);
 
 #endif /* SHELL_H */

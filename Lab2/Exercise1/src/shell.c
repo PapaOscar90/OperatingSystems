@@ -1,110 +1,98 @@
+#define DEBUG 1
+
+#include "macros.h"
+
 #include "shell.h"
-#include "stdio.h"
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
-// Convert a parse status to a shell status
-ShellStatus shell_status_from_parse_status(ParseStatus status) {
-  ShellStatus result;
+extern FILE *yyin;
 
-  switch (status) {
-  case ParseInvalidSyntaxError:
-    result = ShellInvalidSyntaxError;
-    break;
-  case ParseOk: // TODO the shell status should only be called on errors
-    result = ShellSuccessfulExecution;
-    break;
+void eval(char const *eval_string) {
+  size_t num_commands = 0;
+  Command *commands = parse(eval_string, &num_commands);
+
+  // For each command in commands
+  for (size_t i = 0; i < num_commands; ++i) {
+    exec(commands[i]);
   }
 
-  return result;
+  free(commands);
 }
 
-// Convert an exec status to a shell status
-ShellStatus shell_status_from_exec_status(ExecStatus status) {
-  ShellStatus result;
+Command *parse(char const *parse_string, size_t *num_parsed) {
+  DBG("Parsing string: %s", parse_string);
+  *num_parsed = 0;
+  Command *commands = checked_calloc(0, sizeof(*commands));
+  return commands;
+}
 
-  switch (status) {
-  case ExecExit:
-    result = ShellExit;
-    break;
-  case ExecSuccessfulExecution:
-    result = ShellSuccessfulExecution;
-    break;
-  case ExecInputOutputToSameFileError:
-    result = ShellInputOutputToSameFileError;
-    break;
-  case ExecExitBackgroundProcessesRunning:
-    result = ShellExitBackgroundProcessesRunningError;
-    break;
-  case ExecCommandNotFoundError:
-    result = ShellCommandNotFoundError;
-    break;
+// TODO should this return the exit_code along side the inevitable shell_status?
+void exec(Command command) {
+  switch (command.type) {
+  case BUILTIN:
+    return exec_builtin(command);
+  case EXTERNAL:
+    return exec_external(command);
   }
-
-  return result;
 }
 
-// Display the shell prompt.
-void type_prompt(void) { printf("$ "); }
+void exec_builtin(Command command) {
+  DBG("Executing builtin command...");
+  DBG("Command: %u", command.builtin);
+  DBG("Arguments: %s", command.arguments);
+  DBG("In background?: %s", command.in_background ? "true" : "false");
+  DBG("Redirection: %d", command.redirection.type);
 
-// TODO this needs to be converted to an actual parse list/ AST type.
-typedef int ParseList;
-
-// Result<ParseList>
-// if status is not an error, the result can be accessed.
-// otherwise accessing the result is UB.
-typedef struct ParseResult {
-  ParseList result;
-  ParseStatus status;
-} ParseResult;
-
-// Parse the provided string
-ParseResult parse(char const *eval_string) {
-  ParseResult result;
-  if (strcmp(eval_string, "exit") == 0)
-    result.status = ParseOk;
-  else
-    result.status = ParseInvalidSyntaxError;
-
-  return result;
+  // If in background spawn child to run command.
+  // If with redirection spawn fds and pipes to pass in and pass out results.
+  // Note as the command is a shell builtin we need not consult the path for its
+  // existence. Execute command with arguments
 }
 
-// Execute a parsed string
-ExecStatus exec(ParseList const parsed) { return ExecExit; }
+void exec_external(Command command) {
+  DBG("Executing external command...");
+  DBG("Command: %s", command.external);
+  DBG("Arguments: %s", command.arguments);
+  DBG("In background?: %s", command.in_background ? "true" : "false");
+  DBG("Redirection: %d", command.redirection.type);
 
-// Evaluate a string
-ShellStatus eval(char const *eval_string) {
-  ParseResult parsed = parse(eval_string);
-  if (parsed.status < 0) {
-    return shell_status_from_parse_status(parsed.status);
+  // If in background spawn child to run command.
+  // If with redirection spawn fds and pipes to pass in and pass out results.
+  // Check if command is on path. If not return error.
+  // If is on path, execute command with arguments.
+}
+
+void type_prompt() {
+  // NOTE Currently no prompt displayed.
+}
+
+int yyparse(Element **env);
+
+static bool END = false;
+
+void eof_handle(void) { END = true; }
+
+static Element *create_element(ElementType type) {
+  Element *element = checked_calloc(1, sizeof(*element));
+  element->type = type;
+  return element;
+}
+
+Element *make_command(char const *command, char const *arguments,
+                      Redirection redirection, bool in_background) {
+  Element *element = create_element(COMMAND);
+  element->command.arguments = unquote_string(arguments);
+  element->command.redirection = redirection;
+  element->command.in_background = in_background;
+  // SHELL_BUILTINS
+  if (strcmp(command, "exit") == 0) {
+    element->command.type = BUILTIN;
+    element->command.builtin = EXIT;
+  } else {
+    element->command.type = EXTERNAL;
+    element->command.external = unquote_string(command);
   }
-
-  ExecStatus exec_status = exec(parsed.result);
-  return shell_status_from_exec_status(exec_status);
-}
-
-// Pretty print a shell status
-void print_shell_status(ShellStatus status) {
-  switch (status) {
-  case ShellCommandNotFoundError:
-    printf("Error: command not found!\n");
-    break;
-  case ShellExit:
-    printf("Shell exiting!\n");
-    break;
-  case ShellExitBackgroundProcessesRunningError:
-    printf("There are still background processes running!\n");
-    break;
-  case ShellInputOutputToSameFileError:
-    printf("Error: input and output files cannot be equal!\n");
-    break;
-  case ShellInvalidSyntaxError:
-    printf("invalid syntax!\n");
-    break;
-  case ShellStartup:
-    printf("Shell starting up\n");
-    break;
-  case ShellSuccessfulExecution:
-    printf("Shell command successfully executed\n");
-    break;
-  }
+  return element;
 }
