@@ -2,6 +2,7 @@
 #define SHELL_H
 
 #include "command.h"
+#include "parse.h"
 #include "redirection.h"
 #include "util.h"
 #include <stdbool.h>
@@ -11,11 +12,6 @@
 
 /// Evaluate the provided string, thereby executing the encoded commands.
 void eval(char const *eval_string);
-
-/// Parse the provided string, thereby extracting the encoded commands. The
-/// extracted commands are stored along the returned pointer. The amount of
-/// commands is updated in the reference to `num_commands`.
-Command *parse(char const *parse_string, size_t *num_commands);
 
 /// Execute a command. A `command` may be either a `BUILTIN` or an `EXTERNAL`
 /// command. The logic is necessarily different depending on what should occur.

@@ -19,15 +19,6 @@ void eval(char const *eval_string) {
   free(commands);
 }
 
-Command *parse(char const *parse_string, size_t *num_parsed) {
-  // If there is a parse error this should print invalid input and return the
-  // empty commands list.
-  DBG("Parsing string: %s", parse_string);
-  *num_parsed = 0;
-  Command *commands = checked_calloc(0, sizeof(*commands));
-  return commands;
-}
-
 // TODO should this return the exit_code along side the inevitable shell_status?
 void exec(Command command) {
   switch (command.type) {

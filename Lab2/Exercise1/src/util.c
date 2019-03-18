@@ -55,5 +55,11 @@ char *unquote_string(char const *string) {
   result[result_len] = '\0';
 
   free(intermediary);
-  return result;
+
+  if (in_quote) {
+    free(result);
+    return NULL;
+  } else {
+    return result;
+  }
 }
