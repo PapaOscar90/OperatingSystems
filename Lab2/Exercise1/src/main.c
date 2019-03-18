@@ -2,7 +2,9 @@
 /// specification for the Operating Systems course.
 ///
 /// https://github.com/hmgle/yascm was consulted as a resource on combining
-/// `bison` and `flex` in an interactive c-application.
+/// `bison` and `flex` in an interactive c-application. However, we were unable
+/// to get bison and flex hooked in, in a timely fashion. As a result we tried
+/// to write a parser combinator for the grammar by hand.
 ///
 /// Its structure loosely follows the design in the MINIX book.
 ///    There is a loop which:
