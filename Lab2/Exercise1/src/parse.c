@@ -80,24 +80,24 @@ void free_parse_result(ParseResult result) {
 
 ParseResult parse_command_name(char const *parse_string, size_t start,
                                size_t *new_position) {
-  bool in_quote = false;
-  size_t result_len = 0;
-  char quote = '\0';
+  /* bool in_quote = false; */
+  /* size_t result_len = 0; */
+  /* char quote = '\0'; */
 
-  char *intermediary = checked_malloc(strlen(parse_string) + 1);
+  /* char *intermediary = checked_malloc(strlen(parse_string) + 1); */
 
-  for (; *new_position < strlen(parse_string); (*new_position)++) {
-    if (in_quote && parse_string[*new_position] == quote) {
-      in_quote = false;
-      quote = '\0';
-    } else if (!in_quote && (parse_string[*new_position] == '\'' ||
-                             parse_string[*new_position] == '"')) {
-      in_quote = true;
-      quote = parse_string[*new_position];
-    } else if (!in_quote && !isspace(parse_string[*new_position])) {
-      break;
-    }
-  }
+  /* for (; *new_position < strlen(parse_string); (*new_position)++) { */
+  /*   if (in_quote && parse_string[*new_position] == quote) { */
+  /*     in_quote = false; */
+  /*     quote = '\0'; */
+  /*   } else if (!in_quote && (parse_string[*new_position] == '\'' || */
+  /*                            parse_string[*new_position] == '"')) { */
+  /*     in_quote = true; */
+  /*     quote = parse_string[*new_position]; */
+  /*   } else if (!in_quote && !isspace(parse_string[*new_position])) { */
+  /*     break; */
+  /*   } */
+  /* } */
 
   fprintf(stderr, "Unimplemented\n");
   exit(EXIT_FAILURE);
