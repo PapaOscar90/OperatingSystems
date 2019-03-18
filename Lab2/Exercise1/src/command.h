@@ -4,11 +4,14 @@
 #include "redirection.h"
 #include <stdbool.h>
 
+/// Possible command types.
 typedef enum { BUILTIN, EXTERNAL } CommandType;
 
+/// Possible shell built-ins.
 typedef enum { EXIT } BuiltInType;
 
-typedef struct { // COMMAND
+/// A command that may be executed
+typedef struct {
   CommandType type;
   union {
     struct { // BUILTIN

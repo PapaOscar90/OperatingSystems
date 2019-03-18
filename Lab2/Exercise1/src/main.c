@@ -1,3 +1,21 @@
+/// This application is a basic shell interpreter as defined in the provided
+/// specification for the Operating Systems course.
+///
+/// Its structure loosely follows the design in the MINIX book.
+///    There is a loop which:
+///        Displays a prompt.
+///        Reads a line provided by a user.
+///        Evaluates this line and returns the status of the shell as a result
+///        of that evaluation.
+///
+///   The evaluation of the line first parses the line and if there were no
+///   errors, then proceeds to execute the commands that were extracted from the
+///   line.
+///
+///   The execution draws a distinction between a shell_builtin command and an
+///   external command. The implementation of both is fairly simple and is
+///   forwarded to sub-functions as needed.
+
 #include "shell.h"
 #include <stdbool.h>
 #include <stdio.h>

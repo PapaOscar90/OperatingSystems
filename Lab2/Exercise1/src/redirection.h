@@ -1,6 +1,7 @@
 #ifndef REDIRECTION_H
 #define REDIRECTION_H
 
+/// Possible types of redirection.
 typedef enum {
   LEFT_RIGHT, // < (filename) > (filename)
   RIGHT_LEFT, // > (filename) < (filename)
@@ -9,6 +10,8 @@ typedef enum {
   NONE,       // empty
 } RedirectionType;
 
+/// A redirection knows of its type of redirection and based on this knows about
+/// 0, 1, or 2 files.
 typedef struct {
   RedirectionType type;
   union {
