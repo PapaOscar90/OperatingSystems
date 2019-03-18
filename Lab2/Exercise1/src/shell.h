@@ -47,18 +47,4 @@ typedef enum {
   OTHER,
 } ElementType;
 
-typedef struct {
-  ElementType type;
-  union { // Allows for other elements to be specified in the future
-    Command command;
-  };
-} Element;
-
-// Create a command as one of the possible parsed elements.
-Element *make_command(char const *command, char const *arguments,
-                      Redirection redirection, bool in_background);
-
-// Deal with the EOF in the parsing.
-void eof_handle(void);
-
 #endif /* SHELL_H */

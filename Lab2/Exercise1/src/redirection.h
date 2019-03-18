@@ -27,4 +27,8 @@ typedef struct {
   };
 } Redirection;
 
+void free_redirection(Redirection redirection);
+
+Redirection create_redirection(RedirectionType type, char *file1, char *file2);
+
 #endif /* REDIRECTION_H */

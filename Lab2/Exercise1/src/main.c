@@ -1,6 +1,9 @@
 /// This application is a basic shell interpreter as defined in the provided
 /// specification for the Operating Systems course.
 ///
+/// https://github.com/hmgle/yascm was consulted as a resource on combining
+/// `bison` and `flex` in an interactive c-application.
+///
 /// Its structure loosely follows the design in the MINIX book.
 ///    There is a loop which:
 ///        Displays a prompt.

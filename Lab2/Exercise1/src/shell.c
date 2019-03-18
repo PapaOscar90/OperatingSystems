@@ -7,8 +7,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-extern FILE *yyin;
-
 void eval(char const *eval_string) {
   size_t num_commands = 0;
   Command *commands = parse(eval_string, &num_commands);
@@ -68,33 +66,4 @@ void exec_external(Command command) {
 
 void type_prompt() {
   // NOTE Currently no prompt displayed.
-}
-
-int yyparse(Element **env);
-
-static bool END = false;
-
-void eof_handle(void) { END = true; }
-
-static Element *create_element(ElementType type) {
-  Element *element = checked_calloc(1, sizeof(*element));
-  element->type = type;
-  return element;
-}
-
-Element *make_command(char const *command, char const *arguments,
-                      Redirection redirection, bool in_background) {
-  Element *element = create_element(COMMAND);
-  element->command.arguments = unquote_string(arguments);
-  element->command.redirection = redirection;
-  element->command.in_background = in_background;
-  // SHELL_BUILTINS
-  if (strcmp(command, "exit") == 0) {
-    element->command.type = BUILTIN;
-    element->command.builtin = EXIT;
-  } else {
-    element->command.type = EXTERNAL;
-    element->command.external = unquote_string(command);
-  }
-  return element;
 }

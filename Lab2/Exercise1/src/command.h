@@ -26,4 +26,11 @@ typedef struct {
   bool in_background;
 } Command;
 
+/// Create a command.
+Command create_command(char *command_name, char *arguments,
+                       Redirection redirection, bool in_background);
+
+/// Free the managed memory components of a command.
+void free_command(Command command);
+
 #endif /* COMMAND_H */
