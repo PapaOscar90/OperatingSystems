@@ -173,6 +173,7 @@ ParseResult parse_command_name(char const *parse_string, size_t start,
 
   return result;
 }
+
 ParseResult parse_options(char const *parse_string, size_t start,
                           size_t *new_position) {
   size_t len = strlen(parse_string);
