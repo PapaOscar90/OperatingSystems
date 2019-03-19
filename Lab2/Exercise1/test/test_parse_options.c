@@ -73,4 +73,40 @@ spec("parse_options") {
     check(strcmp(actual.options, expected_options) == 0);
     check(position = expected_position);
   }
+
+  it("should be null if the arguments consist only of unquoted whitespace") {
+    const char *test_command = "ls &     ";
+    size_t position = 2;
+    size_t expected_position = 2;
+
+    ParseResult actual = parse_options(test_command, position, &position);
+    check(actual.type == OPTIONS);
+    check(actual.options == NULL);
+    check(position = expected_position);
+  }
+
+  it("should not capture whitespace after the arguments") {
+    const char *test_command = "ls x y z    ";
+    size_t position = 2;
+    size_t expected_position = strlen(test_command);
+    const char *expected_options = "x y z";
+
+    ParseResult actual = parse_options(test_command, position, &position);
+    check(actual.type == OPTIONS);
+    check(strcmp(actual.options, expected_options) == 0);
+    check(position = expected_position);
+  }
+
+  it("should not capture whitespace after the arguments when followed by an "
+     "'&'") {
+    const char *test_command = "ls x y z    &";
+    size_t position = 2;
+    size_t expected_position = strlen(test_command) - 1;
+    const char *expected_options = "x y z";
+
+    ParseResult actual = parse_options(test_command, position, &position);
+    check(actual.type == OPTIONS);
+    check(strcmp(actual.options, expected_options) == 0);
+    check(position = expected_position);
+  }
 }
