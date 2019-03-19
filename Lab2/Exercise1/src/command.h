@@ -33,4 +33,7 @@ Command create_command(char *command_name, char *arguments,
 /// Free the managed memory components of a command.
 void free_command(Command command);
 
+/// Print a command
+void print_command(Command command);
+
 #endif /* COMMAND_H */
