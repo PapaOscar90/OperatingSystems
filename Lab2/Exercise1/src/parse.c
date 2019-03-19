@@ -120,12 +120,14 @@ ParseResult parse_command_name(char const *parse_string, size_t start,
   size_t i;
   for (i = start; i < len; ++i) {
     if (in_quote && quote == parse_string[i]) {
+      intermediary[amount++] = parse_string[i];
       in_quote = false;
       quote = '\0';
       continue;
     }
 
     if (!in_quote && is_quote(parse_string[i])) {
+      intermediary[amount++] = parse_string[i];
       in_quote = true;
       quote = parse_string[i];
       continue;
@@ -158,13 +160,10 @@ ParseResult parse_command_name(char const *parse_string, size_t start,
     return result;
   }
 
-  char *intermediary2 = checked_malloc(amount + 1);
-  strncpy(intermediary2, intermediary, amount);
-  intermediary2[amount] = '\0';
+  char *command_name = checked_malloc(amount + 1);
+  strncpy(command_name, intermediary, amount);
+  command_name[amount] = '\0';
 
-  char *command_name = unquote_string(intermediary2);
-
-  free(intermediary2);
   free(intermediary);
 
   *new_position = start;
@@ -230,13 +229,10 @@ ParseResult parse_options(char const *parse_string, size_t start,
     return result;
   }
 
-  char *intermediary2 = checked_malloc(amount + 1);
-  strncpy(intermediary2, intermediary, amount);
-  intermediary2[amount] = '\0';
+  char *options = checked_malloc(amount + 1);
+  strncpy(options, intermediary, amount);
+  options[amount] = '\0';
 
-  char *options = unquote_string(intermediary2);
-
-  free(intermediary2);
   free(intermediary);
 
   *new_position = start;

@@ -11,7 +11,8 @@
 
 void eval(char const *eval_string) {
   size_t num_commands = 0;
-  Command *commands = parse(eval_string, &num_commands);
+  char *parse_string = unquote_string(eval_string);
+  Command *commands = parse(parse_string, &num_commands);
 
   // For each command in commands
   for (size_t i = 0; i < num_commands; ++i) {
@@ -19,6 +20,7 @@ void eval(char const *eval_string) {
   }
 
   free(commands);
+  free(parse_string);
 }
 
 // TODO should this return the exit_code along side the inevitable shell_status?

@@ -32,7 +32,7 @@ spec("parse_command_name") {
     const char *test_command = "'   echo   ls'";
     size_t position = 0;
 
-    const char *expected_command = "   echo   ls";
+    const char *expected_command = "'   echo   ls'";
     size_t expected_position = 14;
 
     ParseResult actual = parse_command_name(test_command, position, &position);
@@ -52,7 +52,7 @@ spec("parse_command_name") {
     const char *test_command = "'                 '";
     size_t position = 0;
     size_t expected_position = strlen(test_command);
-    const char *expected_command = "                 ";
+    const char *expected_command = "'                 '";
     ParseResult actual = parse_command_name(test_command, position, &position);
     check(actual.type == COMMAND_NAME);
     check(strcmp(actual.command_name, expected_command) == 0);
@@ -64,6 +64,17 @@ spec("parse_command_name") {
     size_t position = 0;
     size_t expected_position = strlen(test_command) - 1;
     const char *expected_command = "echo";
+    ParseResult actual = parse_command_name(test_command, position, &position);
+    check(actual.type == COMMAND_NAME);
+    check(strcmp(actual.command_name, expected_command) == 0);
+    check(position = expected_position);
+  }
+
+  it("should leave interior quotes in the command") {
+    const char *test_command = "'echo'";
+    size_t position = 0;
+    size_t expected_position = strlen(test_command);
+    const char *expected_command = "'echo'";
     ParseResult actual = parse_command_name(test_command, position, &position);
     check(actual.type == COMMAND_NAME);
     check(strcmp(actual.command_name, expected_command) == 0);
