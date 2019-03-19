@@ -83,6 +83,10 @@ pid_t checked_fork(void) {
 // Go through the user's path from getenv to check if command exists
 char *find_command_path(char *command) {
   // Get the user's path
+  //
+  // NOTE If a copy is not used, due to our code subsequent calls to
+  // getenv("PATH") returns only the first directory on the path.
+  // FIXME figure out why.
   char *temp = getenv("PATH");
   size_t len = strlen(temp) + 1;
   char *path = checked_malloc(len);
