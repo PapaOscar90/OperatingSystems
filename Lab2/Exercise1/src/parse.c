@@ -239,6 +239,17 @@ ParseResult parse_options(char const *parse_string, size_t start,
   free(intermediary);
 
   *new_position = start;
+
+  // Trim trailing whitespace
+  long trail = strlen(options) - 1;
+  while (trail >= 0) {
+    if (!isspace(options[trail])) {
+      options[trail + 1] = '\0';
+      break;
+    }
+    trail--;
+  }
+
   if (strlen(options) == 0) {
     free(options);
     result.type = OPTIONS;
