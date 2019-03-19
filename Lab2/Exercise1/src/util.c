@@ -1,8 +1,14 @@
+#define DEBUG 1
+
+#include "macros.h"
+
 #include "util.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 void *checked_malloc(size_t size) {
   void *p = malloc(size);
@@ -64,97 +70,26 @@ char *unquote_string(char const *string) {
   }
 }
 
-// Parse a command from an input string.
-//   A command is either the first consecutive string that contains no
-//   non-line-breaking whitespace characters
-//   OR
-//   The text enclosed between the first pair of single or double quotes.
-char *parseCommand(const char *input) {
-  size_t offset = 0;
-  size_t inputLen = strlen(input);
-
-  char *tempCommand = safeCalloc(inputLen + 1, sizeof(*tempCommand));
-
-  // Skip whitespace
-  while (offset < inputLen && isNonBreakingSpace(input[offset]))
-    offset++;
-
-  int withinDoubleQuotes = 0;
-  int withinSingleQuotes = 0;
-  size_t i = 0;
-  while (offset < inputLen && (withinDoubleQuotes || withinSingleQuotes ||
-                               !isNonBreakingSpace(input[offset]))) {
-    if (!withinSingleQuotes && input[offset] == '"') {
-      withinDoubleQuotes = !withinDoubleQuotes;
-    } else if (!withinDoubleQuotes && input[offset] == '\'') {
-      withinSingleQuotes = !withinSingleQuotes;
-    } else {
-      tempCommand[i] = input[offset];
-      i++;
-    }
-    offset++;
-  }
-
-  if (withinDoubleQuotes || withinSingleQuotes) {
-    free(tempCommand);
-    fprintf(stderr, "Mismatched quotation: %c\n",
-            withinDoubleQuotes ? '"' : '\'');
+// fork which exits on error
+pid_t checked_fork(void) {
+  pid_t id = fork();
+  if (id == -1) {
+    perror("fork");
     exit(EXIT_FAILURE);
   }
-
-  tempCommand[offset] = '\0';
-
-  // Copy the command from the temporary buffer and return it
-  char *command = safeCalloc(strlen(tempCommand) + 1, sizeof(*command));
-  strcpy(command, tempCommand);
-  free(tempCommand);
-  return command;
-}
-
-// Extract the arguments from an input string.
-char *parseArguments(const char *input) {
-  size_t offset = 0;
-  size_t inputLen = strlen(input);
-
-  // Skip whitespace
-  while (offset < inputLen && isNonBreakingSpace(input[offset]))
-    offset++;
-
-  // Skip past the argument
-  int withinDoubleQuotes = 0;
-  int withinSingleQuotes = 0;
-  while (offset < inputLen && (withinDoubleQuotes || withinSingleQuotes ||
-                               !isNonBreakingSpace(input[offset]))) {
-    if (!withinSingleQuotes && input[offset] == '"') {
-      withinDoubleQuotes = !withinDoubleQuotes;
-    } else if (!withinDoubleQuotes && input[offset] == '\'') {
-      withinSingleQuotes = !withinSingleQuotes;
-    }
-    offset++;
-  }
-
-  // Skip whitespace before the arguments
-  while (offset < inputLen && isNonBreakingSpace(input[offset]))
-    offset++;
-
-  if (offset < inputLen) {
-    // If there are arguments, copy them
-    char *arguments =
-        safeCalloc(strlen(input) - offset + 1, sizeof(*arguments));
-    strncpy(arguments, input + offset, strlen(input) - offset);
-    return arguments;
-  } else {
-    // There are no arguments
-    return NULL;
-  }
+  return id;
 }
 
 // Go through the user's path from getenv to check if command exists
-char *findCommandPath(char *command) {
+char *find_command_path(char *command) {
   // Get the user's path
-  char *path = getenv("PATH");
+  char *temp = getenv("PATH");
+  size_t len = strlen(temp) + 1;
+  char *path = checked_malloc(len);
+  strcpy(path, temp);
+  path[len] = '\0';
 
-  char *absolutePath;
+  char *absolute_path;
 
   struct stat buffer;
 
@@ -162,22 +97,24 @@ char *findCommandPath(char *command) {
   // Go through all the paths appending the command.
   //   If the path exists, then break returning that path.
   while (token != NULL) {
-    absolutePath =
-        safeCalloc(strlen(token) + strlen(command) + 2, sizeof(*absolutePath));
+    absolute_path = checked_calloc(strlen(token) + strlen(command) + 2,
+                                   sizeof(*absolute_path));
     // Append the command to the directory
-    sprintf(absolutePath, "%s/%s", token, command);
+    sprintf(absolute_path, "%s/%s", token, command);
 
     // If that path exists and is a regular file.
-    if (stat(absolutePath, &buffer) == 0 && S_ISREG(buffer.st_mode)) {
-      return absolutePath;
+    if (stat(absolute_path, &buffer) == 0 && S_ISREG(buffer.st_mode)) {
+      free(path);
+      return absolute_path;
     }
 
     // Get the next directory from the path
     token = strtok(NULL, ":");
     // Cleanup
-    free(absolutePath);
+    free(absolute_path);
   }
 
+  free(path);
   // The command is not in the user's path
   return NULL;
 }
