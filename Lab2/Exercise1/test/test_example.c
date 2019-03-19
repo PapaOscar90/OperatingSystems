@@ -1,3 +1,5 @@
 #include "bdd-for-c.h"
 
-spec("alt") {}
+spec("example") {
+  it("should pass") { check(2 + 2 == 4); }
+}

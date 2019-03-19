@@ -26,21 +26,4 @@ void exec_external(Command command);
 /// Display a prompt to the user.
 void type_prompt(void);
 
-/* SHELL PARSING *************************************************************/
-typedef enum {
-  COMMAND_NAME,
-  OPTIONS,
-  COMMAND_PART,
-  COMMAND_LIST,
-  REDIRECT_IN,
-  REDIRECT_OUT,
-  IO_REDIRECTION,
-  EMPTY,
-  FILE_NAME,
-  COMMAND,
-  BACKGROUND,
-  INPUT_LINE,
-  OTHER,
-} ElementType;
-
 #endif /* SHELL_H */
