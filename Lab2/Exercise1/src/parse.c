@@ -239,8 +239,14 @@ ParseResult parse_options(char const *parse_string, size_t start,
   free(intermediary);
 
   *new_position = start;
-  result.type = OPTIONS;
-  result.options = options;
+  if (strlen(options) == 0) {
+    free(options);
+    result.type = OPTIONS;
+    result.options = NULL;
+  } else {
+    result.type = OPTIONS;
+    result.options = options;
+  }
 
   return result;
 }
