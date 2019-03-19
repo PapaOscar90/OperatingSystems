@@ -29,7 +29,7 @@ void print_command(Command command) {
   }
   printf("\t arguments: '%s'\n", command.arguments);
   printf("\t redirection: '%d'\n", command.redirection.type);
-  printf("\t in_background: '%d'\n", command.in_background);
+  printf("\t in_background: '%s'\n", command.in_background ? "true" : "false");
 }
 
 Command create_command(char *command_name, char *arguments,
