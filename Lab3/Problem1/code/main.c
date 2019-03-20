@@ -3,11 +3,6 @@
 
 #include "util.h"
 
-typedef struct Scheduler
-{
-    int queue1;
-} Scheduler;
-
 typedef struct Process
 {
     int priority;
@@ -19,6 +14,16 @@ typedef struct Process
     int *CPUq;
     int *IOq;
 } Process;
+
+typedef struct Scheduler
+{
+    int quantum;
+    int numP1, numP2, numP3;
+    int sizeP1, sizeP2, sizeP3;
+    Process *priority1;
+    Process *priority2;
+    Process *priority3;
+} Scheduler;
 
 // Add a CPU process to queue
 void addCPUToProcess(Process *process, int cpuTime)
@@ -87,17 +92,64 @@ Process createProcess(int priority)
     return newProcess;
 }
 
+Scheduler createScheduler(int quantum)
+{
+    Scheduler newScheduler;
+    newScheduler.quantum = quantum;
+
+    newScheduler.sizeP1 = 20;
+    newScheduler.sizeP2 = 20;
+    newScheduler.sizeP3 = 20;
+    newScheduler.numP1 = 0;
+    newScheduler.numP2 = 0;
+    newScheduler.numP3 = 0;
+
+    newScheduler.priority1 = malloc(newScheduler.sizeP1 * sizeof(Process));
+    newScheduler.priority2 = malloc(newScheduler.sizeP2 * sizeof(Process));
+    newScheduler.priority3 = malloc(newScheduler.sizeP3 * sizeof(Process));
+
+    return newScheduler;
+}
+
+void addProcessToSchedulerP1(Scheduler *scheduler, Process *process)
+{
+    if (scheduler->numP1 == scheduler->sizeP1)
+    {
+        scheduler->sizeP1 *= 2;
+        scheduler->priority1 = realloc(scheduler->priority1, scheduler->sizeP1 * sizeof(Process));
+    }
+    scheduler->priority1[scheduler->numP1] = *process;
+    scheduler->numP1++;
+}
+
+void printProcess(Process testProcess)
+{
+    printf("Process CPUq: ");
+    printArrays(testProcess.CPUq, testProcess.sizeCPUq);
+    printf("\nProcess IOq: ");
+    printArrays(testProcess.IOq, testProcess.sizeIOq);
+    printf("\n");
+}
+
+void printScheduler(Scheduler scheduler)
+{
+    printf("Scheduler (Q=%d) Contains:\nPriority 1:\n", scheduler.quantum);
+    Process process;
+    for (int i = 0; i < scheduler.numP1; i++)
+    {
+        process = scheduler.priority1[i];
+        printProcess(process);
+    }
+}
+
 int main(int argc, char *argv[])
 {
     printf("Hello world!\n");
     Process testProcess = createProcess(1);
 
     printf("Process Priority: %d\nCPUq Length: %d\nIOq Length: %d\n", testProcess.priority, testProcess.sizeCPUq, testProcess.sizeIOq);
-    printf("Process CPUq: ");
-    printArrays(testProcess.CPUq, testProcess.sizeCPUq);
-    printf("\nProcess IOq: ");
-    printArrays(testProcess.IOq, testProcess.sizeIOq);
-    printf("\n");
+
+    printProcess(testProcess);
 
     addCPUToProcess(&testProcess, 100);
     addCPUToProcess(&testProcess, 200);
@@ -106,9 +158,12 @@ int main(int argc, char *argv[])
     addCPUToProcess(&testProcess, 10);
     addCPUToProcess(&testProcess, 100);
 
-    printf("Process CPUq: ");
-    printArrays(testProcess.CPUq, testProcess.sizeCPUq);
-    printf("\nProcess IOq: ");
-    printArrays(testProcess.IOq, testProcess.sizeIOq);
-    printf("\n");
+    printProcess(testProcess);
+
+    Scheduler testScheduler = createScheduler(10);
+    printScheduler(testScheduler);
+    addProcessToSchedulerP1(&testScheduler, &testProcess);
+    printScheduler(testScheduler);
+
+    return 0;
 }
