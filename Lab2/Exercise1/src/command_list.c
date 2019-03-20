@@ -1,4 +1,3 @@
-#define DEBUG 1
 #include "macros.h"
 
 #include "checked.h"
