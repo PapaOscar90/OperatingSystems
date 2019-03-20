@@ -1,84 +1,117 @@
 #define DEBUG 1
-
 #include "macros.h"
 
-#include "command.h"
-#include "command_vec.h"
+#include "checked.h"
 #include "parse.h"
-#include "redirection.h"
 #include "util.h"
 #include <assert.h>
 #include <ctype.h>
 #include <stdbool.h>
 #include <string.h>
 
-void print_parse_result(ParseResult result) {
-  switch (result.type) {
-  case ERR:
-    printf("ERR\n");
-    break;
-  case EOI:
-    printf("EOI\n");
-    break;
-  case COMMAND_PART:
-    printf("COMMAND_PART:\n\tcommand: '%s'\n\toptions:'%s'\n",
-           result.command_part.command_name, result.command_part.options);
-  case COMMAND_NAME:
-    printf("COMMAND_NAME: '%s'\n", result.command_name);
-    break;
-  case OPTIONS:
-    printf("OPTIONS: '%s'\n", result.command_name);
-    free(result.options);
-    break;
-  case IO_REDIRECTION:
-    printf("IO_REDIRECTION: ");
-    /* print_redirection(result.redirection); */
-    putchar('\n');
-    break;
-  case COMMAND:
-    print_command(result.command);
-    putchar('\n');
-    break;
-  case INPUT_LINE:
-    printf("INPUT_LINE: ");
-    /* print_commands(result.commands); // needs number of commands as well.*/
-    putchar('\n');
+/// Return whether a character is quote or not (' or ").
+bool is_quote(char const c) { return c == '\'' || c == '"'; }
+
+/// A check for symbols that mark the bound of a command.
+bool is_command_name_bound_symbol(char const c) { return c == '&' || c == '|'; }
+
+/// A check for symbols that mark the bound of a filename.
+bool is_file_name_bound_symbol(char c) {
+  return c == '<' || c == '>' || is_command_name_bound_symbol(c);
+}
+
+/// A check for the symbols that mark the bound of options.
+bool is_options_bound_symbol(char const c) {
+  return is_file_name_bound_symbol(c);
+}
+
+char *strip_quotes(char const *string) {
+  // Allocate maximum possible result size, the length of the original string.
+  char *intermediary = checked_malloc(strlen(string) + 1);
+  size_t result_len = 0;
+
+  bool in_quote = false;
+  char quote = '\0';
+
+  for (size_t i = 0; i < strlen(string); ++i) {
+    if (in_quote && string[i] == quote) {
+      in_quote = false;
+      quote = '\0';
+      continue;
+    } else if (!in_quote && is_quote(string[i])) {
+      in_quote = true;
+      quote = string[i];
+      continue;
+    }
+
+    intermediary[result_len++] = string[i];
+  }
+
+  char *result = checked_malloc(result_len);
+  strncpy(result, intermediary, result_len);
+  result[result_len] = '\0';
+
+  free(intermediary);
+
+  if (in_quote) {
+    free(result);
+    return NULL;
+  } else {
+    return result;
   }
 }
 
-void free_parse_result(ParseResult result) {
-  switch (result.type) {
-  case ERR:
+void free_parse(Parse parse) {
+  switch (parse.type) {
+  case PARSE_ERR:
     break;
-  case EOI:
+  case PARSE_INPUT_LINE:
+    free_input_line(parse.input_line);
     break;
-  case COMMAND_PART:
-    free(result.command_part.command_name);
-    free(result.command_part.options);
-  case COMMAND_NAME:
-    free(result.command_name);
+  case PARSE_COMMAND:
+    free_command(parse.command);
     break;
-  case OPTIONS:
-    free(result.options);
+  case PARSE_IO_REDIRECTION:
+    free_io_redirection(parse.io_redirection);
     break;
-  case IO_REDIRECTION:
-    free_redirection(result.redirection);
+  case PARSE_COMMAND_LIST:
+    free_command_list(parse.command_list);
     break;
-  case COMMAND:
-    free_command(result.command);
+  case PARSE_COMMAND_PART:
+    free_command_part(parse.command_part);
     break;
-  case INPUT_LINE:
-    fprintf(stderr, "Unreachable: %s:%d%s\n", __FILE__, __LINE__, __func__);
-    exit(EXIT_FAILURE);
+  case PARSE_FILE_NAME:
+    free(parse.file_name);
+    break;
+  case PARSE_COMMAND_NAME:
+    free(parse.command_name);
+    break;
+  case PARSE_OPTIONS:
+    free(parse.options);
+    break;
   }
 }
 
-bool is_special_shell_symbol(char const c) { return c == '&'; }
+Parse parse(char const *input) {
+  size_t position = 0;
+  Parse parsed = parse_input_line(input, position, &position);
 
-void skip_whitespace(char const *parse_string, size_t start,
-                     size_t *new_position) {
+  assert(parsed.type == PARSE_ERR || parsed.type == PARSE_INPUT_LINE);
+
+  DBG("%lu %lu %d", position, strlen(input), parsed.type == PARSE_ERR);
+  // Not all the characters were processed.
+  if (position < strlen(input)) {
+    free_parse(parsed);
+    Parse err = {.type = PARSE_ERR};
+    return err;
+  }
+
+  return parsed;
+}
+
+void skip_whitespace(char const *input, size_t start, size_t *new_position) {
   // If the provided start position is outside of bounds, do nothing.
-  size_t len = strlen(parse_string);
+  size_t len = strlen(input);
   if (start >= len) {
     return;
   }
@@ -86,7 +119,7 @@ void skip_whitespace(char const *parse_string, size_t start,
   // From the start position onwards, check each character
   for (size_t i = start; i < len; ++i) {
     // If the character is not a whitespace character
-    if (!isspace(parse_string[i])) {
+    if (!isspace(input[i])) {
       // Assign the current position as the new_position and return
       *new_position = i;
       return;
@@ -98,16 +131,294 @@ void skip_whitespace(char const *parse_string, size_t start,
   *new_position = len;
 }
 
-bool is_quote(char const c) { return c == '"' || c == '\''; }
+size_t number_of_commands(size_t start, char const *input) {
+  size_t count = 1;
+  bool in_quote = false;
+  char quote = '\0';
 
-ParseResult parse_command_name(char const *parse_string, size_t start,
-                               size_t *new_position) {
-  size_t len = strlen(parse_string);
+  for (size_t i = start; i < strlen(input); ++i) {
+    if (!in_quote && is_quote(input[i])) {
+      in_quote = true;
+      quote = input[i];
+      continue;
+    }
+    if (in_quote && input[i] == quote) {
+      in_quote = false;
+      quote = '\0';
+      continue;
+    }
 
-  ParseResult result;
-  skip_whitespace(parse_string, start, &start);
+    if (!in_quote && input[i] == '&') {
+      count++;
+    }
+  }
+
+  return count;
+}
+
+size_t number_of_command_parts(size_t start, char const *input) {
+  size_t count = 1;
+  bool in_quote = false;
+  char quote = '\0';
+
+  for (size_t i = start; i < strlen(input); ++i) {
+    if (!in_quote && is_quote(input[i])) {
+      in_quote = true;
+      quote = input[i];
+      continue;
+    }
+    if (in_quote && input[i] == quote) {
+      in_quote = false;
+      quote = '\0';
+      continue;
+    }
+
+    if (!in_quote) {
+      if (input[i] == '&')
+        break;
+      else if (input[i] == '|')
+        count++;
+    }
+  }
+
+  return count;
+}
+
+Parse parse_input_line(char const *input, size_t start, size_t *new_position) {
+  InputLine input_line = new_input_line(number_of_commands(start, input));
+
+  *new_position = start;
+  for (size_t i = 0; i < input_line.amount; ++i) {
+    Parse command_parse = parse_command(input, *new_position, new_position);
+
+    if (command_parse.type == PARSE_ERR) {
+      free_parse(command_parse);
+      input_line.amount = i;
+      free_input_line(input_line);
+      Parse err = {.type = PARSE_ERR};
+      return err;
+    }
+
+    assert(command_parse.type == PARSE_COMMAND);
+
+    input_line.commands[i] = command_parse.command;
+
+    if (i < input_line.amount - 1) {
+      skip_whitespace(input, *new_position, new_position);
+      if (input[*new_position] != '&') {
+        free_parse(command_parse);
+        input_line.amount = i;
+        free_input_line(input_line);
+        Parse err = {.type = PARSE_ERR};
+        return err;
+      }
+      (*new_position)++;
+      skip_whitespace(input, *new_position, new_position);
+      DBG("%lu", *new_position);
+    }
+  }
+
+  Parse result = {.type = PARSE_INPUT_LINE, .input_line = input_line};
+  return result;
+}
+
+Parse parse_command(char const *input, size_t start, size_t *new_position) {
+  Parse command_list_parse = parse_command_list(input, start, new_position);
+
+  if (command_list_parse.type == PARSE_ERR) {
+    free_parse(command_list_parse);
+    Parse err = {.type = PARSE_ERR};
+    return err;
+  }
+
+  assert(command_list_parse.type == PARSE_COMMAND_LIST);
+
+  skip_whitespace(input, *new_position, new_position);
+
+  Parse io_redirection_parse =
+      parse_io_redirection(input, *new_position, new_position);
+
+  if (io_redirection_parse.type == PARSE_ERR) {
+    free_parse(command_list_parse);
+    free_parse(io_redirection_parse);
+    Parse err = {.type = PARSE_ERR};
+    return err;
+  }
+
+  assert(io_redirection_parse.type == PARSE_IO_REDIRECTION);
+
+  Command command = {.command_list = command_list_parse.command_list,
+                     .io_redirection = io_redirection_parse.io_redirection};
+
+  Parse result = {.type = PARSE_COMMAND, .command = command};
+  return result;
+}
+
+Parse parse_io_redirection(char const *input, size_t start,
+                           size_t *new_position) {
+  IoRedirection io_redirection = {.type = IO_REDIRECTION_EMPTY};
+  if (input[start] == '<') {
+    (*new_position)++;
+    skip_whitespace(input, *new_position, new_position);
+    Parse filename_1_parse =
+        parse_file_name(input, *new_position, new_position);
+    if (filename_1_parse.type == PARSE_ERR) {
+      free_parse(filename_1_parse);
+      free_io_redirection(io_redirection);
+      Parse err = {.type = PARSE_ERR};
+      return err;
+    }
+    assert(filename_1_parse.type == PARSE_FILE_NAME);
+
+    skip_whitespace(input, *new_position, new_position);
+
+    if (input[*new_position] == '>') {
+      (*new_position)++;
+      Parse filename_2_parse =
+          parse_file_name(input, *new_position, new_position);
+      if (filename_2_parse.type == PARSE_ERR) {
+        free_parse(filename_1_parse);
+        free_parse(filename_2_parse);
+        free_io_redirection(io_redirection);
+        Parse err = {.type = PARSE_ERR};
+        return err;
+      }
+
+      assert(filename_2_parse.type == PARSE_FILE_NAME);
+
+      io_redirection.type = IO_REDIRECTION_LEFT_RIGHT;
+      io_redirection.file1 = filename_1_parse.file_name;
+      io_redirection.file2 = filename_2_parse.file_name;
+    } else {
+      io_redirection.type = IO_REDIRECTION_LEFT;
+      io_redirection.file = filename_1_parse.file_name;
+    }
+
+  } else if (input[start] == '>') {
+    (*new_position)++;
+
+    skip_whitespace(input, *new_position, new_position);
+    Parse filename_1_parse =
+        parse_file_name(input, *new_position, new_position);
+    if (filename_1_parse.type == PARSE_ERR) {
+      free_parse(filename_1_parse);
+      free_io_redirection(io_redirection);
+      Parse err = {.type = PARSE_ERR};
+      return err;
+    }
+    assert(filename_1_parse.type == PARSE_FILE_NAME);
+
+    skip_whitespace(input, *new_position, new_position);
+    if (input[*new_position] == '<') {
+      (*new_position)++;
+      Parse filename_2_parse =
+          parse_file_name(input, *new_position, new_position);
+      if (filename_2_parse.type == PARSE_ERR) {
+        free_parse(filename_1_parse);
+        free_parse(filename_2_parse);
+        free_io_redirection(io_redirection);
+        Parse err = {.type = PARSE_ERR};
+        return err;
+      }
+
+      assert(filename_2_parse.type == PARSE_FILE_NAME);
+
+      io_redirection.type = IO_REDIRECTION_RIGHT_LEFT;
+      io_redirection.file1 = filename_1_parse.file_name;
+      io_redirection.file2 = filename_2_parse.file_name;
+    } else {
+      io_redirection.type = IO_REDIRECTION_RIGHT;
+      io_redirection.file = filename_1_parse.file_name;
+    }
+  } else {
+    io_redirection.type = IO_REDIRECTION_EMPTY;
+  }
+
+  Parse result = {.type = PARSE_IO_REDIRECTION,
+                  .io_redirection = io_redirection};
+  return result;
+}
+
+Parse parse_command_list(char const *input, size_t start,
+                         size_t *new_position) {
+  CommandList command_list =
+      new_command_list(number_of_command_parts(start, input));
+
+  *new_position = start;
+
+  for (size_t i = 0; i < command_list.amount; ++i) {
+    Parse command_part_parse =
+        parse_command_part(input, *new_position, new_position);
+    if (command_part_parse.type == PARSE_ERR) {
+      free_parse(command_part_parse);
+      command_list.amount = i;
+      free_command_list(command_list);
+      Parse err = {.type = PARSE_ERR};
+      return err;
+    }
+
+    assert(command_part_parse.type == PARSE_COMMAND_PART);
+
+    command_list.command_parts[i] = command_part_parse.command_part;
+
+    if (i < command_list.amount - 1) {
+      skip_whitespace(input, *new_position, new_position);
+      if (input[*new_position] != '|') {
+        free_parse(command_part_parse);
+        command_list.amount = i;
+        free_command_list(command_list);
+        Parse err = {.type = PARSE_ERR};
+        return err;
+      }
+      (*new_position)++;
+      skip_whitespace(input, *new_position, new_position);
+    }
+  }
+
+  Parse result = {.type = PARSE_COMMAND_LIST, .command_list = command_list};
+  return result;
+}
+
+Parse parse_command_part(char const *input, size_t start,
+                         size_t *new_position) {
+  Parse command_name_parse = parse_command_name(input, start, new_position);
+
+  if (command_name_parse.type == PARSE_ERR) {
+    free_parse(command_name_parse);
+    Parse err = {.type = PARSE_ERR};
+    return err;
+  }
+
+  assert(command_name_parse.type == PARSE_COMMAND_NAME);
+
+  skip_whitespace(input, *new_position, new_position);
+
+  Parse options_parse = parse_options(input, *new_position, new_position);
+
+  if (options_parse.type == PARSE_ERR) {
+    free_parse(command_name_parse);
+    free_parse(options_parse);
+    Parse err = {.type = PARSE_ERR};
+    return err;
+  }
+
+  assert(options_parse.type == PARSE_OPTIONS);
+
+  CommandPart command_part = {.command_name = command_name_parse.command_name,
+                              .options = options_parse.options};
+
+  Parse result = {.type = PARSE_COMMAND_PART, .command_part = command_part};
+  return result;
+}
+
+Parse parse_command_name(char const *input, size_t start,
+                         size_t *new_position) {
+  size_t len = strlen(input);
+
+  Parse result;
+  skip_whitespace(input, start, &start);
   if (start >= len) {
-    result.type = ERR;
+    result.type = PARSE_ERR;
     return result;
   }
 
@@ -119,35 +430,35 @@ ParseResult parse_command_name(char const *parse_string, size_t start,
 
   size_t i;
   for (i = start; i < len; ++i) {
-    if (in_quote && quote == parse_string[i]) {
-      intermediary[amount++] = parse_string[i];
+    if (in_quote && quote == input[i]) {
+      intermediary[amount++] = input[i];
       in_quote = false;
       quote = '\0';
       continue;
     }
 
-    if (!in_quote && is_quote(parse_string[i])) {
-      intermediary[amount++] = parse_string[i];
+    if (!in_quote && is_quote(input[i])) {
+      intermediary[amount++] = input[i];
       in_quote = true;
-      quote = parse_string[i];
+      quote = input[i];
       continue;
     }
 
     if (in_quote) {
-      intermediary[amount++] = parse_string[i];
+      intermediary[amount++] = input[i];
       continue;
     }
 
-    if (!in_quote && isspace(parse_string[i])) {
+    if (!in_quote && isspace(input[i])) {
       break;
     }
 
-    if (!in_quote && is_special_shell_symbol(parse_string[i])) {
+    if (!in_quote && is_command_name_bound_symbol(input[i])) {
       break;
     }
 
     if (!in_quote) {
-      intermediary[amount++] = parse_string[i];
+      intermediary[amount++] = input[i];
       continue;
     }
   }
@@ -156,7 +467,7 @@ ParseResult parse_command_name(char const *parse_string, size_t start,
 
   if (in_quote) {
     free(intermediary);
-    result.type = ERR;
+    result.type = PARSE_ERR;
     return result;
   }
 
@@ -167,21 +478,23 @@ ParseResult parse_command_name(char const *parse_string, size_t start,
   free(intermediary);
 
   *new_position = start;
-  result.type = COMMAND_NAME;
+  result.type = PARSE_COMMAND_NAME;
   result.command_name = command_name;
 
   return result;
 }
 
-ParseResult parse_options(char const *parse_string, size_t start,
-                          size_t *new_position) {
-  size_t len = strlen(parse_string);
+Parse parse_options(char const *input, size_t start, size_t *new_position);
 
-  ParseResult result;
-  skip_whitespace(parse_string, start, &start);
+Parse parse_options(char const *input, size_t start, size_t *new_position) {
+
+  size_t len = strlen(input);
+
+  Parse result;
+  skip_whitespace(input, start, &start);
   if (start >= len) {
     *new_position = len;
-    result.type = OPTIONS;
+    result.type = PARSE_OPTIONS;
     result.options = NULL;
     return result;
   }
@@ -194,29 +507,29 @@ ParseResult parse_options(char const *parse_string, size_t start,
 
   size_t i;
   for (i = start; i < len; ++i) {
-    if (in_quote && quote == parse_string[i]) {
+    if (in_quote && quote == input[i]) {
       in_quote = false;
       quote = '\0';
       continue;
     }
 
-    if (!in_quote && is_quote(parse_string[i])) {
+    if (!in_quote && is_quote(input[i])) {
       in_quote = true;
-      quote = parse_string[i];
+      quote = input[i];
       continue;
     }
 
     if (in_quote) {
-      intermediary[amount++] = parse_string[i];
+      intermediary[amount++] = input[i];
       continue;
     }
 
-    if (!in_quote && is_special_shell_symbol(parse_string[i])) {
+    if (!in_quote && is_options_bound_symbol(input[i])) {
       break;
     }
 
     if (!in_quote) {
-      intermediary[amount++] = parse_string[i];
+      intermediary[amount++] = input[i];
       continue;
     }
   }
@@ -225,7 +538,7 @@ ParseResult parse_options(char const *parse_string, size_t start,
 
   if (in_quote) {
     free(intermediary);
-    result.type = ERR;
+    result.type = PARSE_ERR;
     return result;
   }
 
@@ -247,133 +560,85 @@ ParseResult parse_options(char const *parse_string, size_t start,
     trail--;
   }
 
+  result.type = PARSE_OPTIONS;
   if (strlen(options) == 0) {
     free(options);
-    result.type = OPTIONS;
     result.options = NULL;
   } else {
-    result.type = OPTIONS;
     result.options = options;
   }
 
   return result;
 }
-ParseResult parse_command_part(char const *parse_string, size_t start,
-                               size_t *new_position) {
-  ParseResult result;
-  ParseResult command_name_res =
-      parse_command_name(parse_string, start, new_position);
 
-  if (command_name_res.type == ERR || command_name_res.type != COMMAND_NAME) {
-    free_parse_result(command_name_res);
-    result.type = ERR;
+Parse parse_file_name(char const *input, size_t start, size_t *new_position) {
+  size_t len = strlen(input);
+
+  Parse result;
+  skip_whitespace(input, start, &start);
+  if (start >= len) {
+    result.type = PARSE_ERR;
     return result;
   }
 
-  start = *new_position;
-  ParseResult options_res = parse_options(parse_string, start, new_position);
+  bool in_quote = false;
+  char quote = '\0';
 
-  if (options_res.type == ERR || options_res.type != OPTIONS) {
-    free_parse_result(command_name_res);
-    free_parse_result(options_res);
-    result.type = ERR;
-    return result;
-  }
-  result.type = COMMAND_PART;
-  result.command_part.command_name = command_name_res.command_name;
-  result.command_part.options = options_res.options;
-  return result;
-}
+  char *intermediary = checked_malloc(len + 1);
+  size_t amount = 0;
 
-ParseResult parse_redirection(char const *parse_string, size_t start,
-                              size_t *new_position) {
-  fprintf(stderr, "Unimplemented\n");
-  exit(EXIT_FAILURE);
-}
-ParseResult parse_command(char const *parse_string, size_t start,
-                          size_t *new_position) {
-  ParseResult result;
-  if (start >= strlen(parse_string)) {
-    result.type = EOI;
-    return result;
-  }
-
-  ParseResult command_part_res =
-      parse_command_part(parse_string, start, new_position);
-
-  if (command_part_res.type == ERR || command_part_res.type != COMMAND_PART) {
-    free_parse_result(command_part_res);
-    result.type = ERR;
-    return result;
-  }
-
-  start = *new_position;
-  // TODO
-  ParseResult redirection_res = {.type = IO_REDIRECTION,
-                                 .redirection = {.type = NONE}};
-  /* parse_redirection(parse_string, start, new_position); */
-
-  if (redirection_res.type == ERR || redirection_res.type != IO_REDIRECTION) {
-    free_parse_result(command_part_res);
-    free_parse_result(redirection_res);
-    result.type = ERR;
-    return result;
-  }
-
-  result.type = COMMAND;
-  result.command = create_command(command_part_res.command_part.command_name,
-                                  command_part_res.command_part.options,
-                                  redirection_res.redirection, false);
-  return result;
-}
-
-Command *parse(char const *parse_string, size_t *num_parsed) {
-  // If there is a parse error this should print invalid input and return the
-  // empty commands list.
-  DBG("Parsing string: %s", parse_string);
-
-  size_t len = strlen(parse_string);
-  if (len == 0) {
-    *num_parsed = 0;
-    return NULL;
-  }
-
-  CommandVec v;
-  command_vec_init(&v);
-
-  size_t position = 0;
-
-  ParseResult parsed_command;
-  do {
-    parsed_command = parse_command(parse_string, position, &position);
-    if (parsed_command.type == ERR) {
-      command_vec_free(&v);
-      *num_parsed = 0;
-      return NULL;
+  size_t i;
+  for (i = start; i < len; ++i) {
+    if (in_quote && quote == input[i]) {
+      intermediary[amount++] = input[i];
+      in_quote = false;
+      quote = '\0';
+      continue;
     }
 
-    if (parsed_command.type == COMMAND) {
-
-      if (position < len) {
-        skip_whitespace(parse_string, position, &position);
-        if (parse_string[position] == '&') {
-          position++;
-          parsed_command.command.in_background = true;
-        } else if (position >= len) {
-          command_vec_free(&v);
-          *num_parsed = 0;
-          return NULL;
-        }
-      }
-      command_vec_add(&v, parsed_command.command);
+    if (!in_quote && is_quote(input[i])) {
+      intermediary[amount++] = input[i];
+      in_quote = true;
+      quote = input[i];
+      continue;
     }
-  } while (parsed_command.type != EOI);
 
-  (*num_parsed) = command_vec_count(&v);
-  Command *commands = checked_calloc(*num_parsed, sizeof(*commands));
-  for (size_t i = 0; i < *num_parsed; ++i) {
-    commands[i] = *command_vec_get(&v, i);
+    if (in_quote) {
+      intermediary[amount++] = input[i];
+      continue;
+    }
+
+    if (!in_quote && isspace(input[i])) {
+      break;
+    }
+
+    if (!in_quote && is_file_name_bound_symbol(input[i])) {
+      break;
+    }
+
+    if (!in_quote) {
+      intermediary[amount++] = input[i];
+      continue;
+    }
   }
 
-  return commands;
+  start = i;
+
+  if (in_quote) {
+    free(intermediary);
+    result.type = PARSE_ERR;
+    return result;
+  }
+
+  char *file_name = checked_malloc(amount + 1);
+  strncpy(file_name, intermediary, amount);
+  file_name[amount] = '\0';
+
+  free(intermediary);
+
+  *new_position = start;
+  result.type = PARSE_FILE_NAME;
+  result.file_name = file_name;
+
+  return result;
 }

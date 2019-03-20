@@ -1,5 +1,5 @@
 #include "../src/parse.h"
-#include "bdd-for-c.h"
+#include "bdd_for_c.h"
 
 spec("parse_options") {
   it("should parse a normal set of options properly") {
@@ -9,8 +9,8 @@ spec("parse_options") {
     const char *expected_options = "x y z";
     size_t expected_position = strlen(test_command);
 
-    ParseResult actual = parse_options(test_command, position, &position);
-    check(actual.type == OPTIONS);
+    Parse actual = parse_options(test_command, position, &position);
+    check(actual.type == PARSE_OPTIONS);
     check(strcmp(actual.options, expected_options) == 0);
     check(position == expected_position);
   }
@@ -22,8 +22,8 @@ spec("parse_options") {
     const char *expected_command = "ls";
     size_t expected_position = strlen(test_command);
 
-    ParseResult actual = parse_options(test_command, position, &position);
-    check(actual.type == OPTIONS);
+    Parse actual = parse_options(test_command, position, &position);
+    check(actual.type == PARSE_OPTIONS);
     check(strcmp(actual.options, expected_command) == 0);
     check(position == expected_position);
   }
@@ -35,8 +35,8 @@ spec("parse_options") {
     const char *expected_options = "   echo   ls";
     size_t expected_position = strlen(test_command);
 
-    ParseResult actual = parse_options(test_command, position, &position);
-    check(actual.type == OPTIONS);
+    Parse actual = parse_options(test_command, position, &position);
+    check(actual.type == PARSE_OPTIONS);
     check(strcmp(actual.options, expected_options) == 0);
     check(position == expected_position);
   }
@@ -46,8 +46,8 @@ spec("parse_options") {
     size_t position = 4;
 
     size_t expected_position = strlen(test_command);
-    ParseResult actual = parse_options(test_command, position, &position);
-    check(actual.type == OPTIONS);
+    Parse actual = parse_options(test_command, position, &position);
+    check(actual.type == PARSE_OPTIONS);
     check(actual.options == NULL);
     check(position == expected_position);
   }
@@ -57,8 +57,8 @@ spec("parse_options") {
     size_t position = 4;
     size_t expected_position = strlen(test_command);
     const char *expected_options = "                 ";
-    ParseResult actual = parse_options(test_command, position, &position);
-    check(actual.type == OPTIONS);
+    Parse actual = parse_options(test_command, position, &position);
+    check(actual.type == PARSE_OPTIONS);
     check(strcmp(actual.options, expected_options) == 0);
     check(position = expected_position);
   }
@@ -68,8 +68,8 @@ spec("parse_options") {
     size_t position = 4;
     size_t expected_position = strlen(test_command) - 1;
     const char *expected_options = "lsasa";
-    ParseResult actual = parse_options(test_command, position, &position);
-    check(actual.type == OPTIONS);
+    Parse actual = parse_options(test_command, position, &position);
+    check(actual.type == PARSE_OPTIONS);
     check(strcmp(actual.options, expected_options) == 0);
     check(position = expected_position);
   }
@@ -79,8 +79,8 @@ spec("parse_options") {
     size_t position = 2;
     size_t expected_position = 2;
 
-    ParseResult actual = parse_options(test_command, position, &position);
-    check(actual.type == OPTIONS);
+    Parse actual = parse_options(test_command, position, &position);
+    check(actual.type == PARSE_OPTIONS);
     check(actual.options == NULL);
     check(position = expected_position);
   }
@@ -91,8 +91,8 @@ spec("parse_options") {
     size_t expected_position = strlen(test_command);
     const char *expected_options = "x y z";
 
-    ParseResult actual = parse_options(test_command, position, &position);
-    check(actual.type == OPTIONS);
+    Parse actual = parse_options(test_command, position, &position);
+    check(actual.type == PARSE_OPTIONS);
     check(strcmp(actual.options, expected_options) == 0);
     check(position = expected_position);
   }
@@ -104,8 +104,8 @@ spec("parse_options") {
     size_t expected_position = strlen(test_command) - 1;
     const char *expected_options = "x y z";
 
-    ParseResult actual = parse_options(test_command, position, &position);
-    check(actual.type == OPTIONS);
+    Parse actual = parse_options(test_command, position, &position);
+    check(actual.type == PARSE_OPTIONS);
     check(strcmp(actual.options, expected_options) == 0);
     check(position = expected_position);
   }

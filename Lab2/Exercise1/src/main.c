@@ -1,27 +1,20 @@
-/// This application is a basic shell interpreter as defined in the provided
-/// specification for the Operating Systems course.
-///
-/// https://github.com/hmgle/yascm was consulted as a resource on combining
-/// `bison` and `flex` in an interactive c-application. However, we were unable
-/// to get bison and flex hooked in, in a timely fashion. As a result we tried
-/// to write a parser combinator for the grammar by hand.
-///
-/// Its structure loosely follows the design in the MINIX book.
-///    There is a loop which:
-///        Displays a prompt.
-///        Reads a line provided by a user.
-///        Evaluates this line and returns the status of the shell as a result
-///        of that evaluation.
-///
-///   The evaluation of the line first parses the line and if there were no
-///   errors, then proceeds to execute the commands that were extracted from the
-///   line.
-///
-///   The execution draws a distinction between a shell_builtin command and an
-///   external command. The implementation of both is fairly simple and is
-///   forwarded to sub-functions as needed.
-
+//! This application is a basic shell interpreter.
+//! This application is a basic shell interpreter as defined in the provided
+//! specification for the Operating Systems course.
+//!
+//! https://github.com/hmgle/yascm was consulted as a resource on combining
+//! `bison` and `flex` in an interactive c-application. However, we were unable
+//! to get bison and flex hooked in, in a timely fashion. As a result we tried
+//! to write a parser combinator for the grammar by hand.
+//!
+//! Its structure loosely follows the design in the MINIX book.
+//!    There is a loop which:
+//!        Displays a prompt.
+//!        Reads a line provided by a user.
+#include "checked.h"
+#include "exec.h"
 #include "shell.h"
+#include "util.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -40,7 +33,10 @@ int main() {
     // Read the line provided by the user.
     read_line(&line, &line_len);
     // Evaluate the line.
-    eval(line);
+    Exec exec = eval(line);
+    if (exec.type == EXEC_EXIT) {
+      break;
+    }
   }
 
   // Cleanup resources.

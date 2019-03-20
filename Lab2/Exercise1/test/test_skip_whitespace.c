@@ -1,5 +1,5 @@
 #include "../src/parse.h"
-#include "bdd-for-c.h"
+#include "bdd_for_c.h"
 
 spec("skip_whitespace") {
   static const char *test_string = "a bcde     fghij     ";

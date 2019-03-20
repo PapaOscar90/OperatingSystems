@@ -1,50 +1,50 @@
+#define DEBUG 1
+#include "macros.h"
+
+#include "checked.h"
 #include "command.h"
-#include "redirection.h"
-#include <stdio.h>
-#include <stdlib.h>
+#include "exec.h"
+#include "util.h"
 #include <string.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
 void free_command(Command command) {
-  free_redirection(command.redirection);
-  free(command.arguments);
-  switch (command.type) {
-  case BUILTIN:
-    // Nothing to free
-    break;
-  case EXTERNAL:
-    free(command.external);
-    break;
-  }
+  free_command_list(command.command_list);
+  free_io_redirection(command.io_redirection);
 }
 
-void print_command(Command command) {
-  printf("COMMAND:\n");
-  switch (command.type) {
-  case BUILTIN:
-    printf("\t command (builtin): '%d'\n", command.builtin);
-    break;
-  case EXTERNAL:
-    printf("\t command (external): '%s'\n", command.external);
-    break;
+Exec exec_command(Command command, bool in_background) {
+  if (strcmp(command.command_list.command_parts[0].command_name, "exit") == 0) {
+    Exec result = {.type = EXEC_EXIT};
+    return result;
   }
-  printf("\t arguments: '%s'\n", command.arguments);
-  printf("\t redirection: '%d'\n", command.redirection.type);
-  printf("\t in_background: '%s'\n", command.in_background ? "true" : "false");
-}
 
-Command create_command(char *command_name, char *arguments,
-                       Redirection redirection, bool in_background) {
-  Command command;
-  command.arguments = arguments;
-  command.redirection = redirection;
-  command.in_background = in_background;
-  // SHELL_BUILTINS
-  if (strcmp(command_name, "exit") == 0) {
-    command.type = BUILTIN;
-    command.builtin = EXIT;
+  // Execute the command.
+  pid_t child = checked_fork();
+
+  if (child != 0) {
+    // Parent
+
+    // If the process is in the foreground, wait for the child;
+    if (!in_background) {
+      waitpid(child, NULL, 0);
+    }
   } else {
-    command.type = EXTERNAL;
-    command.external = command_name;
+    // Child
+    DBG("Executing COMMAND:");
+    Exec exec = exec_command_list(command.command_list, command.io_redirection);
+
+    switch (exec.type) {
+    case EXEC_ERR:
+      exit(EXIT_FAILURE);
+    case EXEC_COMMAND:
+      exit(EXIT_SUCCESS);
+    case EXEC_EXIT:
+      UNREACHABLE("Parent handles exiting.");
+    }
   }
-  return command;
+
+  Exec result = {.type = EXEC_COMMAND};
+  return result;
 }

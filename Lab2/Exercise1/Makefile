@@ -2,19 +2,9 @@ TARGET = shell
 SOURCE_DIR := src
 TEST_DIR := test
 DOC_DIR := doc
-LEX_SOURCES := $(shell find $(SOURCE_DIR) -name "*.l")
-YACC_SOURCES := $(shell find $(SOURCE_DIR) -name "*.y")
 CC_SOURCES := $(shell find $(SOURCE_DIR) -name "*.c")
 TEST_SOURCES := $(shell find $(TEST_DIR) -name "test_*.c")
 TEST_AUX_SOURCES := $(shell find $(SOURCE_DIR) -not -name "main.c" -name "*.c")
-
-# Lexer
-LEX = flex
-LFLAGS =
-
-# Parser
-YACC = bison
-YFLAGS = -d
 
 # Compiler
 CC = gcc
@@ -25,9 +15,8 @@ default: $(TARGET)
 
 all: default
 
+.PHONY: shell
 shell: $(SOURCES)
-	# $(YACC) $(YFLAGS) $(YACC_SOURCES)
-	# $(LEX) $(LFLAGS) $(LEX_SOURCES)
 	$(CC) $(CFLAGS) $(CC_SOURCES) -o $@
 
 .PHONY: test
@@ -52,7 +41,7 @@ test-clean:
 
 .PHONY: src-clean
 src-clean:
-		-rm -f $(TARGET) *.tab.h *.tab.c *.yy.c
+		-rm -f $(TARGET)
 
 .PHONY: doc-clean
 doc-clean:
