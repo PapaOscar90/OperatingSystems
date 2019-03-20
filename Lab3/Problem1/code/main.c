@@ -1,13 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "util.h"
+
 typedef struct Scheduler
 {
     int queue1;
-};
+} Scheduler;
 
 typedef struct Process
 {
+    int priority;
     int aliveTime;
     int frontCPUq, frontIOq;
     int backCPUq, backIOq;
@@ -17,6 +20,7 @@ typedef struct Process
     int *IOq;
 } Process;
 
+// Add a CPU process to queue
 void addCPUToProcess(Process *process, int cpuTime)
 {
     // If there is no more room in the array
@@ -37,6 +41,7 @@ void addCPUToProcess(Process *process, int cpuTime)
     return;
 }
 
+// Add an IO request to queue
 void addIOToProcess(Process *process, int ioTime)
 {
     // If there is no more room in the array
@@ -57,11 +62,13 @@ void addIOToProcess(Process *process, int ioTime)
     return;
 }
 
-Process createProcess()
+Process createProcess(int priority)
 {
     Process newProcess;
+    newProcess.priority = priority;
     newProcess.sizeCPUq = 20;
     newProcess.sizeIOq = 20;
+    newProcess.aliveTime = 0;
 
     newProcess.CPUq = malloc(newProcess.sizeCPUq * sizeof(int));
     newProcess.IOq = malloc(newProcess.sizeIOq * sizeof(int));
@@ -83,4 +90,11 @@ Process createProcess()
 int main(int argc, char *argv[])
 {
     printf("Hello world!\n");
+    Process testProcess = createProcess(1);
+
+    printf("Process Priority: %d\nCPUq Length: %d\nIOq Length: %d\n", testProcess.priority, testProcess.sizeCPUq, testProcess.sizeIOq);
+    printf("Process CPUq: ");
+    printArray(testProcess.CPUq, testProcess.sizeCPUq);
+    printf("\n");
+    printArray(testProcess.CPUq, testProcess.sizeCPUq);
 }
