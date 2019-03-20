@@ -33,4 +33,7 @@ Exec eval(char const *input) {
 }
 
 /// Display a prompt to the user.
-void type_prompt(void) { printf("$ "); }
+void type_prompt(void) {
+  // No prompt is required for the Themis submission
+  /* printf("$ "); */
+}
