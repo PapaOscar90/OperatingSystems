@@ -94,7 +94,21 @@ int main(int argc, char *argv[])
 
     printf("Process Priority: %d\nCPUq Length: %d\nIOq Length: %d\n", testProcess.priority, testProcess.sizeCPUq, testProcess.sizeIOq);
     printf("Process CPUq: ");
-    printArray(testProcess.CPUq, testProcess.sizeCPUq);
+    printArrays(testProcess.CPUq, testProcess.sizeCPUq);
+    printf("\nProcess IOq: ");
+    printArrays(testProcess.IOq, testProcess.sizeIOq);
     printf("\n");
-    printArray(testProcess.CPUq, testProcess.sizeCPUq);
+
+    addCPUToProcess(&testProcess, 100);
+    addCPUToProcess(&testProcess, 200);
+    addCPUToProcess(&testProcess, 150);
+    addCPUToProcess(&testProcess, 50);
+    addCPUToProcess(&testProcess, 10);
+    addCPUToProcess(&testProcess, 100);
+
+    printf("Process CPUq: ");
+    printArrays(testProcess.CPUq, testProcess.sizeCPUq);
+    printf("\nProcess IOq: ");
+    printArrays(testProcess.IOq, testProcess.sizeIOq);
+    printf("\n");
 }
