@@ -8,6 +8,7 @@ typedef struct Scheduler
 
 typedef struct Process
 {
+    int aliveTime;
     int frontCPUq, frontIOq;
     int backCPUq, backIOq;
     int sizeCPUq;
