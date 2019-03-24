@@ -2,6 +2,7 @@
 #define SCHEDULER_H
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "process.h"
 
@@ -55,13 +56,38 @@ void setupScheduler(Scheduler Scheduler)
 
   while (getline(&line, &len, stdin) != -1)
   {
+    int startTime;
     int priority;
+    int cpuRead, ioRead;
 
     printf(line);
-    sscanf(line, "%d ", &priority);
-    printf("Adding a process, priority %d...\n", priority);
-    printf(line);
-    Process newProcess = createProcess(priority);
+    char *token;
+    token = strtok(line, " ");
+    startTime = atoi(token);
+    token = strtok(NULL, " ");
+    priority = atoi(token);
+    printf("Adding a process, priority %d, starting at %d...\n", priority, startTime);
+    Process newProcess = createProcess(priority, startTime);
+
+    while (1)
+    {
+      token = strtok(NULL, " ");
+      cpuRead = atoi(token);
+      if (cpuRead != -1)
+      {
+        printf("Adding %d to CPU. ", cpuRead);
+        addCPUToProcess(&newProcess, cpuRead);
+        token = strtok(NULL, " ");
+        ioRead = atoi(token);
+        if (ioRead != -1)
+        {
+          printf("Adding %d to IO\n", ioRead);
+          addIOToProcess(&newProcess, ioRead);
+          continue;
+        }
+      }
+      break; // Stop reading process
+    }
   }
 
   free(line);

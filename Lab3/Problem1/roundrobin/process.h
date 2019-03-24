@@ -17,7 +17,7 @@ typedef struct Process
 
 void addCPUToProcess(Process *process, int cpuTime);
 void addIOToProcess(Process *process, int ioTime);
-Process createProcess(int priority);
+Process createProcess(int priority, int startTime);
 
 // Add a CPU process to queue
 void addCPUToProcess(Process *process, int cpuTime)
@@ -61,10 +61,11 @@ void addIOToProcess(Process *process, int ioTime)
   return;
 }
 
-Process createProcess(int priority)
+Process createProcess(int priority, int startTime)
 {
   Process newProcess;
   newProcess.priority = priority;
+  newProcess.startTime = startTime;
   newProcess.sizeCPUq = 20;
   newProcess.sizeIOq = 20;
   newProcess.aliveTime = 0;
