@@ -8,7 +8,8 @@
 int main(int argc, char *argv[])
 {
     Scheduler scheduler = createScheduler(10);
-    setupScheduler(scheduler);
+    setupScheduler(&scheduler);
 
+    printScheduler(scheduler);
     return 0;
 }

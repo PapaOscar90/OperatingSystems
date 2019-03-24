@@ -21,7 +21,7 @@ void printProcess(Process testProcess)
     printArrays(testProcess.CPUq, testProcess.sizeCPUq);
     printf("\nProcess IOq: ");
     printArrays(testProcess.IOq, testProcess.sizeIOq);
-    printf("\n");
+    printf("\n-------------------------------\n");
 }
 
 void printScheduler(Scheduler scheduler)

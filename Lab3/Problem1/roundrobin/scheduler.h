@@ -49,7 +49,29 @@ void addProcessToSchedulerP1(Scheduler *scheduler, Process *process)
   scheduler->numP1++;
 }
 
-void setupScheduler(Scheduler Scheduler)
+void addProcessToSchedulerP2(Scheduler *scheduler, Process *process)
+{
+  if (scheduler->numP2 == scheduler->sizeP2)
+  {
+    scheduler->sizeP2 *= 2;
+    scheduler->priority2 = realloc(scheduler->priority2, scheduler->sizeP2 * sizeof(Process));
+  }
+  scheduler->priority2[scheduler->numP2] = *process;
+  scheduler->numP2++;
+}
+
+void addProcessToSchedulerP3(Scheduler *scheduler, Process *process)
+{
+  if (scheduler->numP3 == scheduler->sizeP3)
+  {
+    scheduler->sizeP3 *= 2;
+    scheduler->priority3 = realloc(scheduler->priority3, scheduler->sizeP3 * sizeof(Process));
+  }
+  scheduler->priority3[scheduler->numP3] = *process;
+  scheduler->numP3++;
+}
+
+void setupScheduler(Scheduler *scheduler)
 {
   char *line = NULL;
   size_t len = 0;
@@ -75,18 +97,33 @@ void setupScheduler(Scheduler Scheduler)
       cpuRead = atoi(token);
       if (cpuRead != -1)
       {
-        printf("Adding %d to CPU. ", cpuRead);
+        //printf("Adding %d to CPU. ", cpuRead);
         addCPUToProcess(&newProcess, cpuRead);
         token = strtok(NULL, " ");
         ioRead = atoi(token);
         if (ioRead != -1)
         {
-          printf("Adding %d to IO\n", ioRead);
+          //printf("Adding %d to IO\n", ioRead);
           addIOToProcess(&newProcess, ioRead);
           continue;
         }
       }
       break; // Stop reading process
+    }
+
+    switch (priority)
+    {
+    case 1:
+      addProcessToSchedulerP1(scheduler, &newProcess);
+      break;
+    case 2:
+      addProcessToSchedulerP2(scheduler, &newProcess);
+      break;
+    case 3:
+      addProcessToSchedulerP3(scheduler, &newProcess);
+      break;
+    default:
+      break;
     }
   }
 
