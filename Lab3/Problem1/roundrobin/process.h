@@ -61,6 +61,7 @@ void addIOToProcess(Process *process, int ioTime)
   return;
 }
 
+// Create a process with certain priority and starting time
 Process createProcess(int priority, int startTime)
 {
   Process newProcess;

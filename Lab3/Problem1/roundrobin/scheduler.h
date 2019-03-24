@@ -6,6 +6,7 @@
 
 #include "process.h"
 
+// Defines the scheduler and all it contains
 typedef struct Scheduler
 {
   int quantum;
@@ -19,6 +20,7 @@ typedef struct Scheduler
 Scheduler createScheduler(int quantum);
 void addProcessToSchedulerP1(Scheduler *scheduler, Process *process);
 
+// Creates a scheduler with a certain quantum that determines the whole rate
 Scheduler createScheduler(int quantum)
 {
   Scheduler newScheduler;
@@ -38,6 +40,7 @@ Scheduler createScheduler(int quantum)
   return newScheduler;
 }
 
+// Add a process to the Priority 1 Q
 void addProcessToSchedulerP1(Scheduler *scheduler, Process *process)
 {
   if (scheduler->numP1 == scheduler->sizeP1)
@@ -49,6 +52,7 @@ void addProcessToSchedulerP1(Scheduler *scheduler, Process *process)
   scheduler->numP1++;
 }
 
+// Add a process to the Priority 2 Q
 void addProcessToSchedulerP2(Scheduler *scheduler, Process *process)
 {
   if (scheduler->numP2 == scheduler->sizeP2)
@@ -60,6 +64,7 @@ void addProcessToSchedulerP2(Scheduler *scheduler, Process *process)
   scheduler->numP2++;
 }
 
+// Add a process to the Priority 3 Q
 void addProcessToSchedulerP3(Scheduler *scheduler, Process *process)
 {
   if (scheduler->numP3 == scheduler->sizeP3)
@@ -71,19 +76,21 @@ void addProcessToSchedulerP3(Scheduler *scheduler, Process *process)
   scheduler->numP3++;
 }
 
+// This will initialize and setup the scheduler by reading in all processes from stdin
 void setupScheduler(Scheduler *scheduler)
 {
   char *line = NULL;
+  char *token;
   size_t len = 0;
 
+  // While there is stuff to read...
   while (getline(&line, &len, stdin) != -1)
   {
     int startTime;
     int priority;
     int cpuRead, ioRead;
 
-    printf(line);
-    char *token;
+    // Use tokens to parse the lines and find each int
     token = strtok(line, " ");
     startTime = atoi(token);
     token = strtok(NULL, " ");
@@ -95,22 +102,25 @@ void setupScheduler(Scheduler *scheduler)
     {
       token = strtok(NULL, " ");
       cpuRead = atoi(token);
+
+      // If there is nothing left to read break
       if (cpuRead != -1)
       {
-        //printf("Adding %d to CPU. ", cpuRead);
         addCPUToProcess(&newProcess, cpuRead);
         token = strtok(NULL, " ");
         ioRead = atoi(token);
+
+        // If there is nothing left to read break
         if (ioRead != -1)
         {
-          //printf("Adding %d to IO\n", ioRead);
           addIOToProcess(&newProcess, ioRead);
           continue;
         }
       }
-      break; // Stop reading process
+      break; // Stop reading in this process
     }
 
+    // Send the new process to the correct Q based on priority
     switch (priority)
     {
     case 1:
@@ -127,6 +137,7 @@ void setupScheduler(Scheduler *scheduler)
     }
   }
 
+  // Free memory
   free(line);
 }
 

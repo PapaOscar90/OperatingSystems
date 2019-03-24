@@ -15,6 +15,7 @@ void printArrays(int *array, int length)
     printf("%d]", array[length - 1]);
 }
 
+// Debug printing of process
 void printProcess(Process testProcess)
 {
     printf("Process CPUq: ");
@@ -24,6 +25,7 @@ void printProcess(Process testProcess)
     printf("\n-------------------------------\n");
 }
 
+// Debug printing of a scheduler and it's contents
 void printScheduler(Scheduler scheduler)
 {
     printf("Scheduler (Q=%d) Contains:\nPriority 1:\n", scheduler.quantum);
