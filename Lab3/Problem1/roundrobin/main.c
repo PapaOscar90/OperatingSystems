@@ -11,5 +11,11 @@ int main(int argc, char *argv[])
     setupScheduler(&scheduler);
 
     printScheduler(scheduler);
+
+    scheduler.currentTime = 0;
+
+    updateActiveProcesses(&scheduler);
+
+    printScheduler(scheduler);
     return 0;
 }

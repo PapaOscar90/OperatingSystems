@@ -28,7 +28,8 @@ void printProcess(Process testProcess)
 // Debug printing of a scheduler and it's contents
 void printScheduler(Scheduler scheduler)
 {
-    printf("Scheduler (Q=%d) Contains:\nPriority 1:\n", scheduler.quantum);
+    printf("Scheduler (Q=%d) Contains:\n# Standby: %d\n", scheduler.quantum, scheduler.numStandby);
+    printf("Priority1:\n---------------------");
     Process process;
     for (int i = 0; i < scheduler.numP1; i++)
     {
