@@ -9,9 +9,14 @@
 // Defines the scheduler and all it contains
 typedef struct Scheduler
 {
+  // The max time a process has to run before interrupt
   int quantum;
+  // Number of Processess
   int numP1, numP2, numP3;
+  // Max size of priority Qs
   int sizeP1, sizeP2, sizeP3;
+
+  // Each priority Q
   Process *priority1;
   Process *priority2;
   Process *priority3;
