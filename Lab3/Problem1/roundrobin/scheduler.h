@@ -33,6 +33,7 @@ Scheduler createScheduler(int quantum)
 {
   Scheduler newScheduler;
   newScheduler.quantum = quantum;
+  newScheduler.currentTime = 0;
 
   newScheduler.sizeP1 = 20;
   newScheduler.sizeP2 = 20;
@@ -167,19 +168,22 @@ void updateActiveProcesses(Scheduler *scheduler)
 {
   for (int i = 0; i < scheduler->numStandby; i++)
   {
-    if (scheduler->standbyQ[i].startTime < scheduler->currentTime)
+    if (scheduler->standbyQ[i].startTime <= scheduler->currentTime)
     {
       // Send the new process to the correct Q based on priority
       switch (scheduler->standbyQ[i].priority)
       {
       case 1:
         addProcessToSchedulerP1(scheduler, i);
+        i--;
         break;
       case 2:
         addProcessToSchedulerP2(scheduler, i);
+        i--;
         break;
       case 3:
         addProcessToSchedulerP3(scheduler, i);
+        i--;
         break;
       default:
         break;

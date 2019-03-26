@@ -9,11 +9,12 @@ int main(int argc, char *argv[])
 {
     Scheduler scheduler = createScheduler(10);
     setupScheduler(&scheduler);
-
+    printf("NEW SCHEDULER CREATED\n");
     printScheduler(scheduler);
+    printf("\n\n");
 
     scheduler.currentTime = 0;
-
+    printf("UPDATED\n");
     updateActiveProcesses(&scheduler);
 
     printScheduler(scheduler);
