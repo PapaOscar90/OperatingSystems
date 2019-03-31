@@ -16,16 +16,14 @@ int main(int argc, char *argv[])
     scheduler.currentTime = 0;
     printf("Starting scheduler...\n");
 
-    runSchedulerRound(&scheduler, 2);
-
+    runSchedulerRound(&scheduler, 0);
+    runSchedulerRound(&scheduler, 1);
     printScheduler(scheduler);
-
-    // runSchedulerRound(&scheduler, 2);
-
-    // printScheduler(scheduler);
-
-    runSchedulerRound(&scheduler, 2);
-
+    runSchedulerRound(&scheduler, 0);
+    runSchedulerRound(&scheduler, 1);
+    printScheduler(scheduler);
+    runSchedulerRound(&scheduler, 0);
+    runSchedulerRound(&scheduler, 1);
     printScheduler(scheduler);
     return 0;
 }

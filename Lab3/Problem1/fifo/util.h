@@ -30,26 +30,10 @@ void printProcess(Process testProcess)
 void printScheduler(Scheduler scheduler)
 {
     printf("\nScheduler (Q=%d) Contains:\n# Standby: %d\n", scheduler.quantum, scheduler.numStandby);
-    printf("Priority1 (%d):\n---------------------\n", scheduler.numP1);
-    Process process;
-    for (int i = 0; i < scheduler.numP1; i++)
+    printf("Active Processes: %d \n--------------------\n", scheduler.numActive);
+    for (int i = 0; i < scheduler.numActive; i++)
     {
-        process = scheduler.priority1[i];
-        printProcess(process);
-    }
-
-    printf("Priority2 (%d):\n---------------------\n", scheduler.numP2);
-    for (int i = 0; i < scheduler.numP2; i++)
-    {
-        process = scheduler.priority2[i];
-        printProcess(process);
-    }
-
-    printf("Priority3 (%d):\n---------------------\n", scheduler.numP3);
-    for (int i = 0; i < scheduler.numP3; i++)
-    {
-        process = scheduler.priority3[i];
-        printProcess(process);
+        printProcess(scheduler.activeProcesses[i]);
     }
 }
 
