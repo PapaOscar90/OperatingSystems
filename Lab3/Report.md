@@ -8,17 +8,24 @@ When a process is activated, it gets put into the active queue. Here it will wai
 
 This whole process repeats over and over until there in nothing left requesting CPU resources and IO. At this point the scheduler can tally up the times from each process, and then compute the average turnaround time. 
 
-## FIFO
+## FIFO Details
 
-## RoundRobin
+### Results
+
+## RoundRobin Details
+
+### Results
 
 
 # Problem 2
 The second problem was very straightforward, and only involved a short algorithm to replicate the page fault process.
 
-## FIFO
+## FIFO Details
 Just as with a real FIFO system, the first page that is loaded is also the first page to be removed from the active frames when a new page needs to be loaded. This causes alot of re-loading, and a major slowdown in performance.
 
+### Results
 (insert examples here)
 
-## clock
+## clock Details
+
+### Results
