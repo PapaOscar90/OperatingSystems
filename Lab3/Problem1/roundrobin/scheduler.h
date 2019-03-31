@@ -12,6 +12,9 @@ typedef struct Scheduler
   // The max time a process has to run before interrupt
   int quantum;
   int currentTime;
+
+  int totalNumProcesses;
+  int totalTurnAroundTime;
   // Number of Processess
   int numP1, numP2, numP3;
   // Max size of priority Qs
