@@ -137,12 +137,12 @@ void processRound(Scheduler *scheduler)
   int cpuDone = 0;
   int ioDone = 0;
 
-  printf("Scanning through. NumActive: %d\n", scheduler->numActive);
+  printf("Scanning through. NumActive: %d, Finished: %d\n", scheduler->numActive, scheduler->finishedProcesses);
   for (int i = 0; i < scheduler->numActive; i++)
   {
     if (scheduler->activeProcesses[i].frontCPUq == scheduler->activeProcesses[i].sizeCPUq && scheduler->activeProcesses[i].frontIOq == scheduler->activeProcesses[i].sizeIOq)
     {
-      scheduler->activeProcesses[i].status = 3;
+      scheduler->activeProcesses[i].status = 2;
       scheduler->finishedProcesses++;
     }
 
