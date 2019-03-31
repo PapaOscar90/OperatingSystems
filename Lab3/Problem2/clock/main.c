@@ -41,6 +41,7 @@ size_t clock_insert(size_t hand, Page *q, size_t size, size_t n)
   }
   q[hand].page_number = n;
   q[hand].used = true;
+  hand = (hand + 1) % size;
 
   return hand;
 }
