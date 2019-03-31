@@ -5,7 +5,7 @@
 typedef struct Process
 {
   int priority;
-  int aliveTime;
+  int endTime;
   int startTime;
   int frontCPUq, frontIOq;
   int backCPUq, backIOq;
@@ -70,7 +70,7 @@ Process createProcess(int priority, int startTime)
   newProcess.startTime = startTime;
   newProcess.sizeCPUq = 20;
   newProcess.sizeIOq = 20;
-  newProcess.aliveTime = 0;
+  newProcess.endTime = 0;
   newProcess.status = 0;
 
   newProcess.CPUq = malloc(newProcess.sizeCPUq * sizeof(int));

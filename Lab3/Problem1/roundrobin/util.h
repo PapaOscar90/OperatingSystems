@@ -18,7 +18,7 @@ void printArrays(int *array, int length)
 // Debug printing of process
 void printProcess(Process testProcess)
 {
-    printf("Process Priority: %d, Starttime: %d, AliveTime: %d\n", testProcess.priority, testProcess.startTime, testProcess.aliveTime);
+    printf("Process StartTime: %d, EndTime: %d\n", testProcess.startTime, testProcess.endTime);
     printf("Process CPUq: ");
     printArrays(testProcess.CPUq, testProcess.sizeCPUq);
     printf("\nProcess IOq: ");
@@ -29,7 +29,7 @@ void printProcess(Process testProcess)
 // Debug printing of a scheduler and it's contents
 void printScheduler(Scheduler scheduler)
 {
-    printf("Scheduler (Q=%d) Contains:\n# Standby: %d\n", scheduler.quantum, scheduler.numStandby);
+    printf("\nScheduler (Q=%d) Contains:\n# Standby: %d\n", scheduler.quantum, scheduler.numStandby);
     printf("Priority1 (%d):\n---------------------\n", scheduler.numP1);
     Process process;
     for (int i = 0; i < scheduler.numP1; i++)
