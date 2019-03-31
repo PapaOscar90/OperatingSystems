@@ -259,6 +259,10 @@ void runSchedulerRound(Scheduler *scheduler, int currentQueue)
   case 0:
     activeQueue = scheduler->priority1;
     activeProcessID = scheduler->activeP1CPU;
+    if (activeProcessID >= scheduler->numP1)
+    {
+      return;
+    }
     if (scheduler->priority1[activeProcessID].status == 3)
     {
       scheduler->activeP1CPU++;
@@ -269,6 +273,10 @@ void runSchedulerRound(Scheduler *scheduler, int currentQueue)
   case 1:
     activeQueue = scheduler->priority2;
     activeProcessID = scheduler->activeP2CPU;
+    if (activeProcessID >= scheduler->numP2)
+    {
+      return;
+    }
     if (scheduler->priority2[activeProcessID].status == 3)
     {
       scheduler->activeP2CPU++;
@@ -279,6 +287,10 @@ void runSchedulerRound(Scheduler *scheduler, int currentQueue)
   case 2:
     activeQueue = scheduler->priority3;
     activeProcessID = scheduler->activeP3CPU;
+    if (activeProcessID >= scheduler->numP3)
+    {
+      return;
+    }
     if (scheduler->priority2[activeProcessID].status == 3)
     {
       scheduler->activeP2CPU++;
@@ -292,7 +304,7 @@ void runSchedulerRound(Scheduler *scheduler, int currentQueue)
 
   printf("\n\nUsing Priority%d for this round. Active process = %d\n\nRemaining time: %d\n", currentQueue + 1, activeProcessID, activeQueue[activeProcessID].CPUq[activeQueue[activeProcessID].frontCPUq]);
 
-  // Handle the CPU/IO interaction for this round if there is a process to run
+  // Handle the CPU interaction for this round if there is a process to run
   if (activeProcessID != numProcessInQueue)
   {
     // If the time needed is less than the quantum
