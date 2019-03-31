@@ -330,6 +330,7 @@ void runSchedulerRound(Scheduler *scheduler, int currentQueue)
     }
   }
 
+  printf("Status=%d\n", activeQueue[activeProcessID].status);
   if (activeQueue[activeProcessID].CPUq[activeQueue[activeProcessID].frontCPUq] == 0)
   {
     switch (currentQueue)
@@ -349,7 +350,7 @@ void runSchedulerRound(Scheduler *scheduler, int currentQueue)
   }
 
   // Now that the CPU is finished crunching, process what IO was taking place while the CPU was working
-  // If thhere is time remaining, proceed to next queue and try taking from that one
+  // If there is time remaining, proceed to next queue and try taking from that one
   switch (scheduler->queueIONum)
   {
   case 0:
