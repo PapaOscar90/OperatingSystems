@@ -6,11 +6,15 @@
 #define MAX_PAGES 50
 #define MAX_REFERENCES 100
 
+typedef struct Page {
+  size_t page_number;
+} Page;
+
 /// Returns -1 if not in queue, else it returns the index.
 /// Worst case: not in the queue so O(n).
-int queue_find(size_t *q, size_t size, size_t n) {
+int queue_find(Page *q, size_t size, size_t n) {
   for (size_t i = 0; i < size; ++i)
-    if (q[i] == n)
+    if (q[i].page_number == n)
       return i;
 
   return -1;
@@ -18,20 +22,20 @@ int queue_find(size_t *q, size_t size, size_t n) {
 
 /// Removes from the front of the queue (the back of the array by shifting
 /// everything) and inserts at the back of the queue.
-void fifo_insert(size_t *q, size_t size, size_t n) {
+void fifo_insert(Page *q, size_t size, size_t n) {
   // 0 used as a sentinel value.
   assert(n != 0);
-  if (q[size - 1] != 0)
-    fprintf(stderr, "\t\tDropping page %lu\n", q[size - 1]);
+  if (q[size - 1].page_number != 0)
+    fprintf(stderr, "\t\tDropping page %lu\n", q[size - 1].page_number);
   for (int i = size - 1; i > 0; i--) {
-    q[i] = q[i - 1];
+    q[i].page_number = q[i - 1].page_number;
   }
   fprintf(stderr, "\t\tInserting page %lu\n", n);
-  q[0] = n;
+  q[0].page_number = n;
 }
 
 size_t page_loop(size_t amount_of_physical_frames) {
-  size_t *frames = calloc(amount_of_physical_frames, sizeof(*frames));
+  Page *frames = calloc(amount_of_physical_frames, sizeof(*frames));
   size_t number_of_page_faults = 0;
 
   // Read the page references in a loop until you cannot.
