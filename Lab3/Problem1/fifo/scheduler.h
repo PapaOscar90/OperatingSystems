@@ -14,6 +14,7 @@ typedef struct Scheduler
   int currentTime;
 
   int totalNumberOfProcesses;
+  int finishedProcesses;
   int totalTurnAroundTime;
 
   // A standby Q of inactive processes yet to begin
@@ -35,6 +36,8 @@ Scheduler createScheduler(int quantum)
   newScheduler.numStandby = 0;
   newScheduler.sizeActive = 20;
   newScheduler.numActive = 0;
+
+  newScheduler.finishedProcesses = 0;
 
   newScheduler.standbyQ = malloc(newScheduler.sizeStandby * sizeof(Process));
   newScheduler.activeProcesses = malloc(newScheduler.sizeActive * sizeof(Process));
@@ -130,9 +133,41 @@ void updateActiveProcesses(Scheduler *scheduler)
 void processRound(Scheduler *scheduler)
 {
   updateActiveProcesses(scheduler);
+  int cpuDone = 0;
+  int ioDone = 0;
 
-  for (int i = 0; i < scheduler->numStandby; i++)
+  for (int i = 0; i < scheduler->numActive; i++)
   {
+    if (scheduler->activeProcesses[i].status == 0 && !cpuDone)
+    {
+      // Subtract CPU Time
+      scheduler->currentTime = scheduler->currentTime + scheduler->activeProcesses[i].CPUq[scheduler->activeProcesses[i].frontCPUq];
+      scheduler->activeProcesses[i].CPUq[scheduler->activeProcesses[i].frontCPUq] = 0;
+      scheduler->activeProcesses[i].frontCPUq++;
+      scheduler->activeProcesses[i].status++;
+      cpuDone = 1;
+    }
+
+    if (scheduler->activeProcesses[i].status == 1 && !ioDone)
+    {
+      // Subtract io time
+      scheduler->currentTime = scheduler->currentTime + scheduler->activeProcesses[i].IOq[scheduler->activeProcesses[i].frontIOq];
+      scheduler->activeProcesses[i].IOq[scheduler->activeProcesses[i].frontIOq] = 0;
+      scheduler->activeProcesses[i].frontCPUq++;
+      scheduler->activeProcesses[i].status--;
+      ioDone = 1;
+    }
+
+    if (scheduler->activeProcesses[i].frontCPUq == scheduler->activeProcesses[i].sizeCPUq && scheduler->activeProcesses[i].frontIOq == scheduler->activeProcesses[i].sizeIOq)
+    {
+      scheduler->activeProcesses[i].status = 3;
+      scheduler->finishedProcesses++;
+    }
+
+    if (cpuDone && ioDone)
+    {
+      return;
+    }
   }
 }
 

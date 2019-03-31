@@ -25,15 +25,12 @@ int main(int argc, char *argv[])
     processRound(&scheduler);
     printScheduler(scheduler);
 
-    while (1)
+    printf("Starting loop\n");
+    while (scheduler.finishedProcesses < scheduler.totalNumberOfProcesses)
     {
         processRound(&scheduler);
-
-        if (scheduler.numActive == 0)
-        {
-            printf("Total Turnaround: %d\nAverage Tur-around: %\n", scheduler.totalTurnAroundTime, scheduler.totalTurnAroundTime / scheduler.totalNumberOfProcesses);
-            break;
-        }
     }
+
+    printScheduler(scheduler);
     return 0;
 }
