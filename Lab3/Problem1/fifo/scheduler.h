@@ -132,12 +132,20 @@ void updateActiveProcesses(Scheduler *scheduler)
 
 void processRound(Scheduler *scheduler)
 {
+  printf("Updating processes.\n");
   updateActiveProcesses(scheduler);
   int cpuDone = 0;
   int ioDone = 0;
 
+  printf("Scanning through. NumActive: %d\n", scheduler->numActive);
   for (int i = 0; i < scheduler->numActive; i++)
   {
+    if (scheduler->activeProcesses[i].frontCPUq == scheduler->activeProcesses[i].sizeCPUq && scheduler->activeProcesses[i].frontIOq == scheduler->activeProcesses[i].sizeIOq)
+    {
+      scheduler->activeProcesses[i].status = 3;
+      scheduler->finishedProcesses++;
+    }
+
     if (scheduler->activeProcesses[i].status == 0 && !cpuDone)
     {
       // Subtract CPU Time
@@ -156,12 +164,6 @@ void processRound(Scheduler *scheduler)
       scheduler->activeProcesses[i].frontCPUq++;
       scheduler->activeProcesses[i].status--;
       ioDone = 1;
-    }
-
-    if (scheduler->activeProcesses[i].frontCPUq == scheduler->activeProcesses[i].sizeCPUq && scheduler->activeProcesses[i].frontIOq == scheduler->activeProcesses[i].sizeIOq)
-    {
-      scheduler->activeProcesses[i].status = 3;
-      scheduler->finishedProcesses++;
     }
 
     if (cpuDone && ioDone)
