@@ -14,9 +14,10 @@ int main(int argc, char *argv[])
     printf("\n\n");
 
     scheduler.currentTime = 0;
-    printf("UPDATED\n");
-    updateActiveProcesses(&scheduler);
+    printf("Starting scheduler...\n");
+    runScheduler(&scheduler);
 
+    printf("\nFinal state of scheduler:"\n);
     printScheduler(scheduler);
     return 0;
 }
