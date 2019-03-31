@@ -15,9 +15,17 @@ int main(int argc, char *argv[])
 
     scheduler.currentTime = 0;
     printf("Starting scheduler...\n");
-    runScheduler(&scheduler);
 
-    printf("\nFinal state of scheduler: \n");
+    runSchedulerRound(&scheduler, 2);
+
+    printScheduler(scheduler);
+
+    // runSchedulerRound(&scheduler, 2);
+
+    // printScheduler(scheduler);
+
+    runSchedulerRound(&scheduler, 2);
+
     printScheduler(scheduler);
     return 0;
 }

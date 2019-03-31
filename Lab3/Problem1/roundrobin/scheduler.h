@@ -197,10 +197,10 @@ void updateActiveProcesses(Scheduler *scheduler)
   }
 }
 
-void runScheduler(Scheduler *scheduler)
+void runSchedulerRound(Scheduler *scheduler, int currentQueue)
 {
-  int currentQueue = 0;
   int activeProcessID = 0;
+  int numProcessInQueue = 0;
   Process *activeQueue;
 
   // Each round, add any newely added process (of current time) to queues
@@ -212,21 +212,71 @@ void runScheduler(Scheduler *scheduler)
   case 0:
     activeQueue = scheduler->priority1;
     activeProcessID = scheduler->activeP1;
+    numProcessInQueue = scheduler->numP1;
     break;
   case 1:
     activeQueue = scheduler->priority2;
     activeProcessID = scheduler->activeP2;
+    numProcessInQueue = scheduler->numP2;
     break;
   case 2:
     activeQueue = scheduler->priority3;
     activeProcessID = scheduler->activeP3;
+    numProcessInQueue = scheduler->numP3;
     break;
   default:
-    currentQueue = (currentQueue + 1) % 3;
     break;
   }
 
-  printf("Using Priority%d for this round. Active process = %d\n", currentQueue, activeProcessID);
+  printf("\n\nUsing Priority%d for this round. Active process = %d\n", currentQueue + 1, activeProcessID);
+
+  // Handle the CPU/IO interaction for this round if there is a process to run
+  if (activeProcessID != numProcessInQueue)
+  {
+    // If the process needs CPU time
+    if (activeQueue[activeProcessID].status == 0)
+    {
+      // If the time needed is less than the quantum
+      if (activeQueue[activeProcessID].CPUq[activeQueue[activeProcessID].frontCPUq] < scheduler->quantum)
+      {
+        // If there is less time for CPU need than the quantum size, only subtract the CPU need time, and update the clock
+        activeQueue[activeProcessID].frontCPUq++;
+        scheduler->currentTime += activeQueue[activeProcessID].CPUq[activeQueue[activeProcessID].frontCPUq];
+        if (activeQueue[activeProcessID].frontCPUq == activeQueue[activeProcessID].sizeCPUq)
+        {
+          // If the CPU is done, increment the status
+          activeQueue[activeProcessID].status++;
+        }
+      }
+      else
+      {
+        // Else take the quantum from the current CPU needs, and update the clock
+        scheduler->currentTime = scheduler->currentTime + scheduler->quantum;
+        activeQueue[activeProcessID].CPUq[activeQueue[activeProcessID].frontCPUq] -= scheduler->quantum;
+      }
+    }
+    else if (activeQueue[activeProcessID].status == 1)
+    {
+      // If the time needed is less than the quantum
+      if (activeQueue[activeProcessID].IOq[activeQueue[activeProcessID].frontIOq] < scheduler->quantum)
+      {
+        // If there is less time for IO need than the quantum size, only subtract the CPU need time, and update the clock
+        activeQueue[activeProcessID].frontIOq++;
+        scheduler->currentTime += activeQueue[activeProcessID].CPUq[activeQueue[activeProcessID].frontIOq];
+        if (activeQueue[activeProcessID].frontIOq == activeQueue[activeProcessID].sizeIOq)
+        {
+          // If the CPU is done, increment the status
+          activeQueue[activeProcessID].status++;
+        }
+      }
+      else
+      {
+        // Else take the quantum from the current CPU needs, and update the clock
+        scheduler->currentTime = scheduler->currentTime + scheduler->quantum;
+        activeQueue[activeProcessID].CPUq[activeQueue[activeProcessID].frontCPUq] -= scheduler->quantum;
+      }
+    }
+  }
 }
 
 #endif /* SCHEDULER_H */

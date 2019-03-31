@@ -13,6 +13,7 @@ typedef struct Process
   int sizeIOq;
   int *CPUq;
   int *IOq;
+  int status; // 0=CPU, 1=IO, 2=finished
 } Process;
 
 void addCPUToProcess(Process *process, int cpuTime);
@@ -70,6 +71,7 @@ Process createProcess(int priority, int startTime)
   newProcess.sizeCPUq = 20;
   newProcess.sizeIOq = 20;
   newProcess.aliveTime = 0;
+  newProcess.status = 0;
 
   newProcess.CPUq = malloc(newProcess.sizeCPUq * sizeof(int));
   newProcess.IOq = malloc(newProcess.sizeIOq * sizeof(int));
