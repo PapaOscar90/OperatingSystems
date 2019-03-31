@@ -233,6 +233,8 @@ void runScheduler(Scheduler *scheduler)
     int delta = findLowestDelta(&scheduler, &active, &io);
     reduceByDelta(&scheduler, &active, &io, delta);
   }
+
+  printf("Scheduler Shutting Down...\n");
 }
 
 int main()
@@ -241,9 +243,7 @@ int main()
   Scheduler scheduler = newScheduler();
   printScheduler(&scheduler); //debug
   runScheduler(&scheduler);   // Begin running
-  //   moveReadyIntoCurrentActive();
-  //   findLowestDelta();
-  //   subtractDeltaFromEverything();
+
   freeScheduler(&scheduler); // Free before shutdown to appease the valgrind gods
 
   return EXIT_SUCCESS;
