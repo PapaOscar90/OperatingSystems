@@ -16,6 +16,8 @@ typedef struct Scheduler
   int numP1, numP2, numP3;
   // Max size of priority Qs
   int sizeP1, sizeP2, sizeP3;
+  // The active process in queue
+  int activeP1, activeP2, activeP3;
 
   // Each priority Q
   Process *priority1;
@@ -43,6 +45,9 @@ Scheduler createScheduler(int quantum)
   newScheduler.numP2 = 0;
   newScheduler.numP3 = 0;
   newScheduler.numStandby = 0;
+  newScheduler.activeP1 = 0;
+  newScheduler.activeP2 = 0;
+  newScheduler.activeP3 = 0;
 
   newScheduler.priority1 = malloc(newScheduler.sizeP1 * sizeof(Process));
   newScheduler.priority2 = malloc(newScheduler.sizeP2 * sizeof(Process));
@@ -190,6 +195,38 @@ void updateActiveProcesses(Scheduler *scheduler)
       }
     }
   }
+}
+
+void runScheduler(Scheduler *scheduler)
+{
+  int currentQueue = 0;
+  int activeProcessID = 0;
+  Process *activeQueue;
+
+  // Each round, add any newely added process (of current time) to queues
+  updateActiveProcesses(scheduler);
+
+  // Take the quantum from the first, second, or third priority depending on cycle
+  switch (currentQueue)
+  {
+  case 0:
+    activeQueue = scheduler->priority1;
+    activeProcessID = scheduler->activeP1;
+    break;
+  case 1:
+    activeQueue = scheduler->priority2;
+    activeProcessID = scheduler->activeP2;
+    break;
+  case 2:
+    activeQueue = scheduler->priority3;
+    activeProcessID = scheduler->activeP3;
+    break;
+  default:
+    currentQueue = (currentQueue + 1) % 3;
+    break;
+  }
+
+  printf("Using Priority%d for this round. Active process = %d\n", currentQueue, activeProcessID);
 }
 
 #endif /* SCHEDULER_H */

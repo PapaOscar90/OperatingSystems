@@ -17,7 +17,7 @@ int main(int argc, char *argv[])
     printf("Starting scheduler...\n");
     runScheduler(&scheduler);
 
-    printf("\nFinal state of scheduler:"\n);
+    printf("\nFinal state of scheduler: \n");
     printScheduler(scheduler);
     return 0;
 }
