@@ -1,5 +1,5 @@
 # Operating Systems Report
-#### Troy Harrison & Philip Oetinger
+Troy Harrison & Philip Oetinger
 
 # Problem 1
 For both of the versions of problem one, we built a simulation of a scheduler that would compute every step of the process. The main data structures include the scheduler itself, and processes. The processes contain information about when they start, what cpu tasks they need, IO tasks, and how long they were alive for. We store the processes in a master array that we can index and place each processes in the active part of the scheduler. 
