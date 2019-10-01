@@ -1,7 +1,3 @@
-# Available tools and references
-## Provided shell grammar
-## Flex and Bison (Did not work)
-## Code Documentation
 # Report
 ## Introduction
 This is the shell implementation for lab 2 - exercise 1 of the operating systems course. The shell uses the basic Read-Execute-Loop structure as presented in the Minix book. We were provided a shell grammar, that the test cases on Themis would conform to.
@@ -10,33 +6,51 @@ This is the shell implementation for lab 2 - exercise 1 of the operating systems
 The basic structure of our application is simple, and followed the specification provided. The basic structure is:
 
 ```
-while status != Exit {
+loop {
     line <- readLine();
     status = eval(line);
-    if isError(status)  {
-      printError(status);
+    if status == EXIT {
+        break;
     }
 }
 ```
 
-We attempted to use flex and bison to aid in the tokenization processes. However, we were unable to get them to hook in to our implementation. As a result we had to make a decision to write our own parser combinator for the grammar by hand, which took too much time. The parser was not fully finished at the time of submission, which results in the full program not being able to run. The structure of the parser loosly follows:
-
+The process of `eval`ing a line is as follows:
 ```
-Loop:
-  Displays a prompt.
-  Reads a line provided by a user.
-  Evaluates this line and returns the status of the shell as a result of that evaluation.
+parsed <- parse(line);
+if parsed.is_err() {
+    print(parsing error);
+    return;
+}
+
+exec(parsed);
 ```
 
-The evaluation of the line first parses the line and if there were no errors, then proceeds to execute the commands that were extracted from the line. The execution depends on the call being either external (on the PATH) or built-in. Simple checks determine which case the command is to be sent to.
+A crucial point to know focus in the design of our application was the determination of our data structures. To simplify and unify the parsing and execution process, we created data structures that followed the provided grammar precisely.
 
-The execution draws a distinction between a shell_builtin command and an external command. The implementation of both is fairly simple and is forwarded to sub-functions as needed. The exec_external handles calls to external programs that reside on the PATH. The functionality is the same as the first assignment's problem 1. The exec_builtin handles all calls that are shell specific. These are custom defined functions that allow the shell to be extended.
+For example consider our `InputLine` type:
+```c
+typedef struct {
+  size_t amount;
+  Command *commands;
+} InputLine;
+```
+
+This matches the provided grammar and we follow this technique recursively for `Command` and the other types in the grammar until we get to base types (`filename`, `command_name`. `options` are all `char *`).
+
+With these structures in place our problem shifts to implementing the parser to generate the top level `InputLine` struct and the executor to run the `InputLine`.
+
+With respect to the parsing, we attempting to use flex and bison in the parsing processes. However, this ended up being far more difficult than anticipated and delayed our work substantially. As a result, we decided to implement a parser combinator, with one parser function being dedicated to each element of the grammar. Composition of these sub-parsers provides us with the upper level `parse_input_line` function. We added some small tests to aid in the design of the parser functions and these tests may be executed via `make test`.
+
+In a similar fashion, the executor function is also composed of sub-executors.  The upper level `exec_input_line`, iterates through each command and delegates the execution of that command to `exec_command`. This function then executes a command on a child process. If the command should be run in the background the parent does not wait for the child to terminate. The child the executes the underlying `CommandList` associated with the command. This is the base level of our execution process and handles Io-redirection, piping, and running the actual base `command_name` + `options`.
+
+IO redirection is handled by redefining the `stdin` and `stdout` file descriptors via `dup2`. For the propagation of errors we made heavy use of tagged unions. This may not be conventional C, but it aided greatly in the development process. This could structure could be reworked, reduced, and modified to be POSIX-compliant.
    
 ## Issues
-We ran into some major issues with Bison and Flex. Since our implemenation was written first, with the assumption that the parsers given would be able to be fused later, we focused upon other critical projects and exams with the assumtion we could easily plug in the parser. However, we ran into major issues with the provided parser, and made a decision at the last minute to write our own parser entirely by hand. This took too long, and resulted in our implementation being not-yet-functional.
-
-However, if we had a few more hours, we would be able to finalize our parser, which would cause the rest of the program to run. Although we weren't able to run the test cases on Themis due to the parser, we are very confident that our implementation of the shell itself is correct. We implemented it in a way that it can be easily extended as well.
 
 ## Evaluation and Extension
-Passes all the test cases if the parser is complete.
-Has not implemented additional features though that should be relatively quick once the parser is complete.
+Passes most of the test cases.
+
+It does not however handle orphan processes correctly and allows for exiting when child processes are still running.
+
+Introducing a distinction in the type between an `external` command and a `builtin` would aid in rapidly developing more shell builtin commands. This should be propagated through to the parser, so that a command_name is either a string or a shell builtin value from an enum.

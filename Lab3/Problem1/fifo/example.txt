@@ -1,0 +1,32 @@
+IO Bound
+0 1 0 1 0 1 0 1 ...(1000)
+
+CPU Bound
+0 1 1 0 1 0 1 0
+IO
+P1 0 1 1 0 1 0 1 0 1 0 ...
+P2 0 1 0 10
+0 1 0 10
+0 1 0 10
+0 1 0 10
+0 1 0 10
+
+{P1, P2}
+P1 > CPU. 1 {P2,P1} IO= P1
+P2 > CPU. 0 {P1,P2} IO= P2
+P1 > CPU. 1 {P2,P1} IO= P2 for  9 more seconds
+
+2 resrouces
+CPU
+DISK
+
+
+"A nonpreemptive scheduling algorithm picks a process to run, and then just lets it run until it BLOCKS FOR I/O"
+A blocked process may become available for work again. It is up to the scheudler to determine to run the newely ready process, the process that was running at the time, or a third process.
+
+System:
+  - Master list of programs
+  - An IO device
+    - Processes can use one at a time, until done with IO
+  - A scheduler
+    - Processes needing CPU time

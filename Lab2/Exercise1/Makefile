@@ -46,3 +46,7 @@ src-clean:
 .PHONY: doc-clean
 doc-clean:
 		-rm -rf doc/html doc/latex
+
+.PHONY: submission
+submission:
+		-rm -f submission.zip && zip submission.zip doc/* Makefile src/* test/*
